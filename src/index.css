@@ -15,35 +15,210 @@ body {
   overflow-x: hidden;
 }
 
-/* Contract Preview Styles */
-.contract-content pre {
-  font-family: 'Times New Roman', Times, serif;
-  font-size: 11pt;
-  line-height: 1.6;
-  color: #000;
-  text-align: left;
-}
-
-/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  @apply w-2;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  @apply bg-gray-100;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
+  @apply bg-gray-400 rounded;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  @apply bg-gray-500;
 }
 
-/* Smooth transitions */
 * {
   transition-property: transform, opacity;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Form Components */
+@utility form-input {
+  @apply w-full px-3 py-2 text-sm border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+
+@utility form-label {
+  @apply block text-xs font-medium text-gray-700 mb-1.5;
+}
+
+@utility form-textarea {
+  @apply form-input min-h-[80px] resize-y;
+}
+
+/* Sidebar Components */
+@utility sidebar-section-title {
+  @apply text-base font-semibold text-gray-900 mb-4;
+}
+
+@utility sidebar-section {
+  @apply flex flex-col gap-4;
+}
+
+/* Contract Document Container */
+@utility contract-doc {
+  @apply bg-white shadow-[0_10px_40px_rgba(0,0,0,0.2)] min-h-[11in] p-[1in] font-['Times_New_Roman',serif] text-[11pt] leading-relaxed text-black;
+}
+
+/* Contract Headings */
+@utility contract-h1 {
+  @apply text-center font-bold text-[16pt] mb-6 font-['Times_New_Roman',serif];
+}
+
+@utility contract-h2 {
+  @apply font-bold text-[12pt] mt-6 mb-3 font-['Times_New_Roman',serif];
+}
+
+@utility contract-h3 {
+  @apply font-bold text-[11pt] mt-4 mb-3 font-['Times_New_Roman',serif];
+}
+
+/* Contract Paragraphs */
+@utility contract-p {
+  @apply mb-3 text-justify font-['Times_New_Roman',serif] text-[11pt] leading-relaxed;
+}
+
+@utility contract-p-center {
+  @apply contract-p text-center;
+}
+
+@utility contract-p-bold {
+  @apply contract-p font-bold;
+}
+
+/* Contract Inputs */
+@utility contract-input {
+  @apply border-none border-b border-gray-600 outline-none font-['Times_New_Roman',serif] text-[11pt] px-1 py-0.5 bg-transparent text-center focus:border-blue-500;
+}
+
+@utility contract-input-inline {
+  @apply contract-input font-bold text-left min-w-[100px];
+}
+
+@utility contract-input-short {
+  @apply contract-input w-[30px];
+}
+
+@utility contract-input-medium {
+  @apply contract-input w-[100px];
+}
+
+@utility contract-input-long {
+  @apply contract-input w-[300px];
+}
+
+@utility contract-input-xlong {
+  @apply contract-input w-[400px];
+}
+
+/* Contract Special Elements */
+@utility contract-date-picker {
+  @apply ml-1 px-1 py-0.5 text-[10pt] border border-gray-400 rounded cursor-pointer;
+}
+
+@utility contract-textarea {
+  @apply w-full min-h-[80px] p-3 font-['Times_New_Roman',serif] text-[11pt] border border-gray-400 rounded resize-y;
+}
+
+/* Checkboxes and Radios in Contract */
+@utility contract-checkbox-label {
+  @apply flex items-start mb-2 cursor-pointer;
+}
+
+@utility contract-checkbox {
+  @apply mt-1 mr-2 cursor-pointer;
+}
+
+@utility contract-radio {
+  @apply mr-1 ml-2 cursor-pointer;
+}
+
+@utility contract-radio-inline {
+  @apply inline-flex items-center ml-2 cursor-pointer;
+}
+
+/* Contract Sections */
+@utility contract-section-divider {
+  @apply mt-12 pt-6 border-t-2 border-black;
+}
+
+@utility contract-subsection-divider {
+  @apply mt-6 pt-4 border-t border-gray-300;
+}
+
+@utility contract-signature-section {
+  @apply mt-12 pt-6 border-t-2 border-black;
+}
+
+@utility contract-signature-block {
+  @apply mb-10;
+}
+
+/* Utility Dividers */
+@utility section-divider {
+  @apply border-t border-gray-200 pt-6;
+}
+
+/* Button Components */
+@utility btn-primary {
+  @apply px-6 py-3 bg-blue-600 text-white border-none rounded-lg text-sm font-semibold cursor-pointer shadow-sm hover:bg-blue-700 transition-colors;
+}
+
+@utility btn-secondary {
+  @apply px-6 py-3 bg-green-600 text-white border-none rounded-lg text-sm font-semibold cursor-pointer shadow-sm hover:bg-green-700 transition-colors;
+}
+
+/* Hamburger Menu */
+@utility hamburger-btn {
+  @apply fixed top-5 right-5 z-[9999] bg-white border border-gray-300 p-3 rounded-lg cursor-pointer shadow-md flex flex-col gap-1 w-10 h-10 justify-center items-center hover:bg-gray-50 transition-colors;
+}
+
+@utility hamburger-line {
+  @apply block w-5 h-0.5 bg-gray-700 transition-all duration-300;
+}
+
+/* Overlay */
+@utility overlay {
+  @apply fixed inset-0 bg-black/50 z-[9998];
+}
+
+/* Contract Selector */
+@utility contract-selector-container {
+  @apply sticky top-0 z-[100] bg-white border-b-2 border-gray-300 p-4 flex justify-center items-center gap-3 shadow-md;
+}
+
+@utility contract-selector-label {
+  @apply text-sm font-semibold text-gray-700;
+}
+
+@utility contract-selector {
+  @apply px-4 py-2 text-sm border-2 border-gray-300 rounded-lg bg-white cursor-pointer outline-none min-w-[300px] font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+}
+
+/* Sidebar */
+@utility sidebar {
+  @apply fixed top-0 right-0 bottom-0 w-[420px] bg-white shadow-[-4px_0_20px_rgba(0,0,0,0.3)] transition-transform duration-300 ease-in-out z-[9999] overflow-y-auto overflow-x-hidden;
+}
+
+@utility sidebar-header {
+  @apply sticky top-0 bg-white border-b border-gray-200 p-6 z-10;
+}
+
+@utility sidebar-title {
+  @apply text-xl font-bold text-gray-900;
+}
+
+@utility sidebar-subtitle {
+  @apply text-sm text-gray-500;
+}
+
+@utility sidebar-close-btn {
+  @apply bg-transparent border-none text-2xl cursor-pointer text-gray-500 p-1 leading-none hover:text-gray-700 transition-colors;
+}
+
+@utility sidebar-content {
+  @apply p-6;
 }

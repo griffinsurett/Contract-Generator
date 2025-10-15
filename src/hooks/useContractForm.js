@@ -1,62 +1,11 @@
 import { useState } from 'react'
+import { getContractConfig } from '../contracts'
 
-export const useContractForm = () => {
-  const [formData, setFormData] = useState({
-    // Service Provider Details
-    serviceProviderName: '',
-    serviceProviderCompany: '',
-    serviceProviderLocation: '',
-    
-    // Client Details
-    clientFirstName: '',
-    clientCompanyName: '',
-    clientAddress: '',
-    clientEmail: '',
-    clientPhone: '',
-    
-    // Date
-    day: '',
-    month: '',
-    year: '',
-    
-    // Exhibit A - Website Type
-    websiteType: 'static',
-    dynamicFeatures: '',
-    
-    // Maintenance Services (array of booleans)
-    maintenanceServices: [],
-    
-    // Content Updates (array of booleans)
-    contentUpdates: [],
-    
-    // Form Monitoring
-    formMonitoring: false,
-    
-    // Form Management
-    formspreeManagement: 'service-provider',
-    
-    // Service Start Date
-    serviceStartDate: '',
-    
-    // Billing Period
-    billingPeriod: 'monthly',
-    
-    // Fees
-    totalFee: '',
-    feeFrequency: 'month',
-    
-    // Invoicing Method
-    invoicingMethod: 'upfront',
-    invoicingOther: '',
-    
-    // Late Payment
-    lateFeeAmount: '',
-    lateFeePercentage: '',
-    lateFeeDays: '',
-    
-    // Additional Notes
-    additionalNotes: ''
-  })
+export const useContractForm = (initialContractId = 'hosting') => {
+  const [currentContract, setCurrentContract] = useState(initialContractId)
+  const [formData, setFormData] = useState(
+    getContractConfig(initialContractId).defaultFields
+  )
 
   const updateField = (field, value) => {
     setFormData(prev => ({
@@ -72,9 +21,16 @@ export const useContractForm = () => {
     }))
   }
 
+  const switchContract = (contractId) => {
+    setCurrentContract(contractId)
+    setFormData(getContractConfig(contractId).defaultFields)
+  }
+
   return {
+    currentContract,
     formData,
     updateField,
-    updateMultipleFields
+    updateMultipleFields,
+    switchContract
   }
 }

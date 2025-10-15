@@ -1,97 +1,66 @@
 import React, { useState } from 'react'
-import ContractDocument from './components/ContractDocument'
 import FormSidebar from './components/FormSidebar'
 import { useContractForm } from './hooks/useContractForm'
+import { getContractList, getContractConfig } from './contracts'
+import { FormProvider } from './contexts/FormContext'
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const contractForm = useContractForm()
 
+  const contractList = getContractList()
+  const currentContractConfig = getContractConfig(contractForm.currentContract)
+  
+  const DocumentComponent = currentContractConfig.Document
+
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#e5e7eb', position: 'relative' }}>
-      {/* Hamburger Button */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        style={{
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          zIndex: 9999,
-          backgroundColor: 'white',
-          border: '1px solid #d1d5db',
-          padding: '12px',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '4px',
-          width: '40px',
-          height: '40px',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}
-      >
-        <span style={{
-          display: 'block',
-          width: '20px',
-          height: '2px',
-          backgroundColor: '#374151',
-          transition: 'all 0.3s',
-          transform: sidebarOpen ? 'rotate(45deg) translateY(6px)' : 'none'
-        }} />
-        <span style={{
-          display: 'block',
-          width: '20px',
-          height: '2px',
-          backgroundColor: '#374151',
-          transition: 'all 0.3s',
-          opacity: sidebarOpen ? 0 : 1
-        }} />
-        <span style={{
-          display: 'block',
-          width: '20px',
-          height: '2px',
-          backgroundColor: '#374151',
-          transition: 'all 0.3s',
-          transform: sidebarOpen ? 'rotate(-45deg) translateY(-6px)' : 'none'
-        }} />
-      </button>
+    <FormProvider 
+      formData={contractForm.formData} 
+      updateField={contractForm.updateField}
+      updateMultipleFields={contractForm.updateMultipleFields}
+    >
+      <div className="min-h-screen bg-gray-200 relative">
+        {/* Hamburger Button */}
+        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="hamburger-btn">
+          <span className={`hamburger-line ${sidebarOpen ? 'rotate-45 translate-y-[6px]' : ''}`} />
+          <span className={`hamburger-line ${sidebarOpen ? 'opacity-0' : 'opacity-100'}`} />
+          <span className={`hamburger-line ${sidebarOpen ? '-rotate-45 -translate-y-[6px]' : ''}`} />
+        </button>
 
-      {/* Overlay */}
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 9998
-          }}
-        />
-      )}
+        {/* Overlay */}
+        {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="overlay" />}
 
-      {/* Main Document */}
-      <div style={{ padding: '40px' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <ContractDocument 
-            formData={contractForm.formData} 
-            updateField={contractForm.updateField}
-          />
+        {/* Contract Selector Dropdown */}
+        <div className="contract-selector-container">
+          <label className="contract-selector-label">Select Contract:</label>
+          <select
+            value={contractForm.currentContract}
+            onChange={(e) => contractForm.switchContract(e.target.value)}
+            className="contract-selector"
+          >
+            {contractList.map(contract => (
+              <option key={contract.id} value={contract.id}>
+                {contract.name}
+              </option>
+            ))}
+          </select>
         </div>
-      </div>
 
-      {/* Sidebar */}
-      <FormSidebar 
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        formData={contractForm.formData}
-        updateField={contractForm.updateField}
-      />
-    </div>
+        {/* Main Document */}
+        <div className="py-10 mx-auto flex justify-center items-center">
+          <div className="max-w-[900px]">
+            <DocumentComponent />
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <FormSidebar 
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          currentContract={contractForm.currentContract}
+        />
+      </div>
+    </FormProvider>
   )
 }
 
