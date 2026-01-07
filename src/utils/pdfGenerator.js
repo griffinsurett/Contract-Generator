@@ -8,14 +8,7 @@ import { jsPDF } from 'jspdf'
  * @returns {Promise<{dataUrl: string, blob: Blob}>} - PDF as data URL and Blob
  */
 export const generateContractPDF = async (element, options = {}) => {
-  const {
-    filename = 'contract.pdf',
-    clientName = 'Client',
-    contractType = 'Contract',
-    signatureData = null,
-    selectedTier = null,
-    clientInfo = {}
-  } = options
+  const { filename = 'contract.pdf' } = options
 
   // Create a clone of the element to modify for PDF
   const clone = element.cloneNode(true)
@@ -24,13 +17,11 @@ export const generateContractPDF = async (element, options = {}) => {
   clone.querySelectorAll('input, select, textarea').forEach(input => {
     const span = document.createElement('span')
     span.textContent = input.value || input.placeholder || '___________'
-    // Explicit styling to prevent any inherited strikethrough or decoration
+    // Simple styling - NO border-bottom (was causing strikethrough appearance)
     span.style.cssText = `
-      border-bottom: 1px solid #333;
-      padding: 0 4px;
       text-decoration: none !important;
       display: inline;
-      font-weight: inherit;
+      font-weight: bold;
       color: #000000;
     `
     input.parentNode.replaceChild(span, input)
@@ -41,10 +32,12 @@ export const generateContractPDF = async (element, options = {}) => {
   container.style.position = 'absolute'
   container.style.left = '-9999px'
   container.style.top = '0'
-  container.style.width = '816px' // Letter width at 96 DPI
-  container.style.padding = '40px'
+  container.style.width = '750px' // Slightly narrower to ensure margins
+  container.style.padding = '50px 60px' // Better margins
   container.style.backgroundColor = 'white'
   container.style.fontFamily = 'Times New Roman, serif'
+  container.style.fontSize = '11pt'
+  container.style.lineHeight = '1.4'
   container.style.color = '#000000' // Force black text to avoid oklch issues
 
   // Force safe colors on all elements (faster than checking each computed style)
@@ -53,78 +46,46 @@ export const generateContractPDF = async (element, options = {}) => {
     el.style.setProperty('text-decoration', 'none', 'important')
   }
 
-  // Add header with contract info
-  const header = document.createElement('div')
-  header.style.marginBottom = '20px'
-  header.style.paddingBottom = '20px'
-  header.style.borderBottom = '2px solid #333'
-  header.innerHTML = `
-    <h1 style="margin: 0 0 10px 0; font-size: 24px; color: #111;">${contractType}</h1>
-    <p style="margin: 0; color: #666; font-size: 12px;">Signed by: ${clientName}</p>
-    <p style="margin: 0; color: #666; font-size: 12px;">Date: ${new Date().toLocaleDateString()}</p>
-    ${selectedTier ? `<p style="margin: 0; color: #666; font-size: 12px;">Selected Plan: ${
-      selectedTier === 'hosting-only' ? 'Hosting Only ($50/mo)' :
-      selectedTier === 'hosting-basic' ? 'Basic Maintenance ($80/mo)' :
-      selectedTier === 'hosting-priority' ? 'Priority Maintenance ($100/mo)' : selectedTier
-    }</p>` : ''}
-  `
+  // Remove sections that shouldn't be in the PDF
+  const downloadSection = clone.querySelector('[data-export-control="true"]')
+  if (downloadSection) {
+    downloadSection.remove()
+  }
 
-  container.appendChild(header)
+  // Remove date picker hints like "(or select: 2026-01-06)"
+  clone.querySelectorAll('input[type="date"]').forEach(datePicker => {
+    const parent = datePicker.closest('span')
+    if (parent && parent.textContent.includes('or select')) {
+      parent.remove()
+    } else {
+      datePicker.remove()
+    }
+  })
 
   // Apply basic colors to all elements in clone (single pass)
   clone.querySelectorAll('*').forEach(forceBasicColors)
   forceBasicColors(clone)
   container.appendChild(clone)
 
-  // Add signature section at the bottom
-  if (signatureData || clientName) {
-    const signatureSection = document.createElement('div')
-    signatureSection.style.marginTop = '40px'
-    signatureSection.style.paddingTop = '20px'
-    signatureSection.style.borderTop = '2px solid #333'
-    signatureSection.style.pageBreakInside = 'avoid'
-
-    signatureSection.innerHTML = `
-      <h3 style="margin: 0 0 20px 0; font-size: 16px;">Signature</h3>
-      <div style="display: flex; gap: 40px;">
-        <div style="flex: 1;">
-          <p style="margin: 0 0 5px 0; font-size: 12px; color: #666;">Typed Name:</p>
-          <p style="margin: 0; font-size: 16px; font-weight: bold;">${clientName}</p>
-        </div>
-        ${signatureData ? `
-          <div style="flex: 1;">
-            <p style="margin: 0 0 5px 0; font-size: 12px; color: #666;">Signature:</p>
-            <img src="${signatureData}" style="max-width: 200px; max-height: 80px; border-bottom: 1px solid #333;" />
-          </div>
-        ` : ''}
-      </div>
-      <div style="margin-top: 20px;">
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #666;">Client Information:</p>
-        <p style="margin: 0; font-size: 14px;">${clientInfo.fullName || clientName}</p>
-        ${clientInfo.email ? `<p style="margin: 0; font-size: 14px;">${clientInfo.email}</p>` : ''}
-        ${clientInfo.phone ? `<p style="margin: 0; font-size: 14px;">${clientInfo.phone}</p>` : ''}
-        ${clientInfo.companyName ? `<p style="margin: 0; font-size: 14px;">${clientInfo.companyName}</p>` : ''}
-        ${clientInfo.address ? `<p style="margin: 0; font-size: 14px;">${clientInfo.address}</p>` : ''}
-      </div>
-      <p style="margin-top: 20px; font-size: 11px; color: #999;">
-        Electronically signed on ${new Date().toLocaleString()}
-      </p>
-    `
-
-    container.appendChild(signatureSection)
-  }
-
   // Add a style element to override oklch colors globally within our container
   const styleOverride = document.createElement('style')
   styleOverride.textContent = `
-    #pdf-container *, #pdf-container *::before, #pdf-container *::after {
+    #pdf-container, #pdf-container * {
       color: #000000 !important;
       background-color: transparent !important;
-      border-color: #cccccc !important;
       text-decoration: none !important;
+      border: none !important;
+      border-bottom: none !important;
+      border-top: none !important;
     }
     #pdf-container {
       background-color: #ffffff !important;
+    }
+    #pdf-container img {
+      max-width: 100% !important;
+    }
+    #pdf-container h1, #pdf-container h2, #pdf-container h3 {
+      border-bottom: none !important;
     }
   `
   container.id = 'pdf-container'
