@@ -4,7 +4,7 @@ import SignaturePad from 'signature_pad'
 import { decodeContractData, generateNextWorkflowLink } from '../utils/contractUrl'
 import { getContractConfig } from '../contracts'
 import { FormProvider } from '../contexts/FormContext'
-import { generateContractPDF, savePDFRecord } from '../utils/pdfGenerator'
+import { generateContractPDF } from '../utils/pdfGenerator'
 
 const ClientContractView = () => {
   const { encodedData } = useParams()
@@ -110,9 +110,12 @@ const ClientContractView = () => {
         backgroundColor: 'rgb(255, 255, 255)',
         penColor: 'rgb(0, 0, 0)'
       })
-      // Track when user finishes drawing
+      // Track when user finishes drawing and capture signature data
       signaturePadRef.current.addEventListener('endStroke', () => {
         setHasSigned(true)
+        // Capture signature data so it renders in the document
+        const dataUrl = signaturePadRef.current.toDataURL()
+        setSignatureData(dataUrl)
       })
     }
   })
@@ -122,6 +125,7 @@ const ClientContractView = () => {
     if (signaturePadRef.current) {
       signaturePadRef.current.clear()
       setHasSigned(false)
+      setSignatureData(null)
     }
   }
 
@@ -150,8 +154,8 @@ const ClientContractView = () => {
 
       // Generate PDF of the signed contract
       let pdfDataUrl = null
-      if (contractDocRef.current) {
-        try {
+      try {
+        if (contractDocRef.current) {
           const pdfResult = await generateContractPDF(contractDocRef.current, {
             filename: `${contractConfig?.name || 'Contract'}_${typedName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
             clientName: typedName,
@@ -162,18 +166,10 @@ const ClientContractView = () => {
           })
           pdfDataUrl = pdfResult.dataUrl
 
-          // Save PDF record locally
-          savePDFRecord(pdfDataUrl, {
-            contractId: currentContractId,
-            contractType: contractConfig?.name,
-            clientName: typedName,
-            clientEmail: clientInfo.email,
-            selectedTier: selectedTier
-          })
-        } catch (pdfError) {
-          console.error('PDF generation error:', pdfError)
-          // Continue without PDF if generation fails
         }
+      } catch (pdfError) {
+        console.error('PDF generation error:', pdfError)
+        // Continue without PDF if generation fails
       }
 
       const acceptanceRecord = {
@@ -191,10 +187,24 @@ const ClientContractView = () => {
         totalSteps: isWorkflow() ? getWorkflowContracts().length : 1
       }
 
-      // Store in localStorage
-      const existingRecords = JSON.parse(localStorage.getItem('contractAcceptances') || '[]')
-      existingRecords.push(acceptanceRecord)
-      localStorage.setItem('contractAcceptances', JSON.stringify(existingRecords))
+      // Store in localStorage (don't include large data like signatures/PDFs)
+      try {
+        const recordToStore = {
+          ...acceptanceRecord,
+          signature: null, // Don't store signature data - too large
+          pdfDataUrl: null // Don't store PDF data - too large
+        }
+        const existingRecords = JSON.parse(localStorage.getItem('contractAcceptances') || '[]')
+        existingRecords.push(recordToStore)
+        // Keep only last 50 records
+        while (existingRecords.length > 50) {
+          existingRecords.shift()
+        }
+        localStorage.setItem('contractAcceptances', JSON.stringify(existingRecords))
+      } catch (storageErr) {
+        console.warn('Could not save to localStorage:', storageErr.message)
+        // Non-critical - continue without saving
+      }
 
       // Send email notification via Formspree with PDF attachment
       const formspreeEndpoint = contractData.options?.formspreeEndpoint
@@ -208,6 +218,8 @@ const ClientContractView = () => {
         // Build email body with contract summary
         const emailBody = {
           _subject: `Contract Signed: ${contractConfig?.name || currentContractId} - ${clientInfo.companyName || typedName}`,
+          _replyto: clientInfo.email, // So dev can reply directly to client
+          email: clientInfo.email, // Required for Formspree auto-response to work
           clientName: typedName,
           clientEmail: clientInfo.email,
           clientPhone: clientInfo.phone || 'Not provided',
@@ -216,13 +228,7 @@ const ClientContractView = () => {
           selectedPlan: planNames[selectedTier] || 'N/A',
           acceptedAt: new Date().toLocaleString(),
           contractType: contractConfig?.name || currentContractId,
-          workflowStep: isWorkflow() ? `${getCurrentWorkflowIndex() + 1} of ${getWorkflowContracts().length}` : 'Single contract',
-          signatureImage: finalSignatureData,
-          // Include PDF as base64 attachment (Formspree supports this)
-          _attachments: pdfDataUrl ? [{
-            filename: `${contractConfig?.name || 'Contract'}_Signed.pdf`,
-            content: pdfDataUrl.split(',')[1] // Remove data URL prefix
-          }] : undefined
+          workflowStep: isWorkflow() ? `${getCurrentWorkflowIndex() + 1} of ${getWorkflowContracts().length}` : 'Single contract'
         }
 
         await fetch(formspreeEndpoint, {

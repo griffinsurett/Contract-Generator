@@ -24,8 +24,15 @@ export const generateContractPDF = async (element, options = {}) => {
   clone.querySelectorAll('input, select, textarea').forEach(input => {
     const span = document.createElement('span')
     span.textContent = input.value || input.placeholder || '___________'
-    span.style.borderBottom = '1px solid #333'
-    span.style.padding = '0 4px'
+    // Explicit styling to prevent any inherited strikethrough or decoration
+    span.style.cssText = `
+      border-bottom: 1px solid #333;
+      padding: 0 4px;
+      text-decoration: none !important;
+      display: inline;
+      font-weight: inherit;
+      color: #000000;
+    `
     input.parentNode.replaceChild(span, input)
   })
 
@@ -38,6 +45,13 @@ export const generateContractPDF = async (element, options = {}) => {
   container.style.padding = '40px'
   container.style.backgroundColor = 'white'
   container.style.fontFamily = 'Times New Roman, serif'
+  container.style.color = '#000000' // Force black text to avoid oklch issues
+
+  // Force safe colors on all elements (faster than checking each computed style)
+  const forceBasicColors = (el) => {
+    el.style.setProperty('color', '#000000', 'important')
+    el.style.setProperty('text-decoration', 'none', 'important')
+  }
 
   // Add header with contract info
   const header = document.createElement('div')
@@ -56,6 +70,10 @@ export const generateContractPDF = async (element, options = {}) => {
   `
 
   container.appendChild(header)
+
+  // Apply basic colors to all elements in clone (single pass)
+  clone.querySelectorAll('*').forEach(forceBasicColors)
+  forceBasicColors(clone)
   container.appendChild(clone)
 
   // Add signature section at the bottom
@@ -96,12 +114,27 @@ export const generateContractPDF = async (element, options = {}) => {
     container.appendChild(signatureSection)
   }
 
+  // Add a style element to override oklch colors globally within our container
+  const styleOverride = document.createElement('style')
+  styleOverride.textContent = `
+    #pdf-container *, #pdf-container *::before, #pdf-container *::after {
+      color: #000000 !important;
+      background-color: transparent !important;
+      border-color: #cccccc !important;
+      text-decoration: none !important;
+    }
+    #pdf-container {
+      background-color: #ffffff !important;
+    }
+  `
+  container.id = 'pdf-container'
+  document.head.appendChild(styleOverride)
   document.body.appendChild(container)
 
   try {
     // Use html2canvas to capture the content
     const canvas = await html2canvas(container, {
-      scale: 2,
+      scale: 1.5, // Reduced from 2 for faster rendering
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff'
@@ -112,33 +145,22 @@ export const generateContractPDF = async (element, options = {}) => {
     const pageHeight = 297 // A4 height in mm
     const imgHeight = (canvas.height * imgWidth) / canvas.width
 
+    // Convert canvas to image data once (expensive operation)
+    const imgData = canvas.toDataURL('image/jpeg', 0.85)
+
     const pdf = new jsPDF('p', 'mm', 'a4')
     let heightLeft = imgHeight
     let position = 0
 
     // Add first page
-    pdf.addImage(
-      canvas.toDataURL('image/jpeg', 0.95),
-      'JPEG',
-      0,
-      position,
-      imgWidth,
-      imgHeight
-    )
+    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
     heightLeft -= pageHeight
 
     // Add additional pages if needed
     while (heightLeft > 0) {
       position = heightLeft - imgHeight
       pdf.addPage()
-      pdf.addImage(
-        canvas.toDataURL('image/jpeg', 0.95),
-        'JPEG',
-        0,
-        position,
-        imgWidth,
-        imgHeight
-      )
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
       heightLeft -= pageHeight
     }
 
@@ -150,6 +172,7 @@ export const generateContractPDF = async (element, options = {}) => {
   } finally {
     // Clean up
     document.body.removeChild(container)
+    document.head.removeChild(styleOverride)
   }
 }
 
@@ -166,18 +189,25 @@ export const blobToBase64 = (blob) => {
 }
 
 /**
- * Saves PDF to local storage for record keeping
+ * Saves PDF metadata to local storage for record keeping
+ * Note: We don't store the actual PDF data URL as it's too large for localStorage
  */
-export const savePDFRecord = (pdfDataUrl, metadata) => {
-  const records = JSON.parse(localStorage.getItem('signedContractPDFs') || '[]')
-  records.push({
-    ...metadata,
-    pdfDataUrl,
-    savedAt: new Date().toISOString()
-  })
-  // Keep only last 10 PDFs to avoid storage limits
-  if (records.length > 10) {
-    records.shift()
+export const savePDFRecord = (metadata) => {
+  try {
+    const records = JSON.parse(localStorage.getItem('signedContractPDFs') || '[]')
+    records.push({
+      ...metadata,
+      // Don't store the full PDF data URL - it's too large
+      // Just store metadata for record keeping
+      savedAt: new Date().toISOString()
+    })
+    // Keep only last 20 records to avoid storage limits
+    while (records.length > 20) {
+      records.shift()
+    }
+    localStorage.setItem('signedContractPDFs', JSON.stringify(records))
+  } catch (err) {
+    console.warn('Could not save PDF record to localStorage:', err.message)
+    // Non-critical - continue without saving
   }
-  localStorage.setItem('signedContractPDFs', JSON.stringify(records))
 }

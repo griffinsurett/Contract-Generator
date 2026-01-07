@@ -112,7 +112,7 @@ const HostingSidebarForm = ({ page = 'provider' }) => {
 };
 
 const HostingDocument = () => {
-  const { formData, updateField } = useFormContext();
+  const { formData, updateField, signatureData, typedName, isClientView } = useFormContext();
 
   // Check if maintenance is included based on tier
   const includesMaintenance = formData.selectedTier && formData.selectedTier !== 'hosting-only';
@@ -1404,15 +1404,30 @@ const HostingDocument = () => {
           <div>
             <p className="contract-p-bold mb-4">FOR THE CLIENT</p>
             <p className="contract-p">{formData.clientCompanyName}</p>
-            <p className="contract-p mt-6">
-              Signature: _________________________
-            </p>
-            <p className="contract-p mt-4">Name: {formData.clientFirstName}</p>
+            {signatureData ? (
+              <div className="mt-6">
+                <p className="contract-p mb-2">Signature:</p>
+                <div className="border-b-2 border-gray-400 pb-2 inline-block">
+                  <img
+                    src={signatureData}
+                    alt="Client signature"
+                    className="h-16 max-w-[200px] object-contain"
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="contract-p mt-6">
+                Signature: _________________________
+              </p>
+            )}
+            <p className="contract-p mt-4">Name: {typedName || formData.clientFirstName}</p>
             <p className="contract-p mt-4">
               Date:{" "}
-              {formData.day && formData.month && formData.year
-                ? `${formData.month} ${formData.day}, ${formData.year}`
-                : ""}
+              {isClientView
+                ? new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                : formData.day && formData.month && formData.year
+                  ? `${formData.month} ${formData.day}, ${formData.year}`
+                  : ""}
             </p>
           </div>
         </div>
