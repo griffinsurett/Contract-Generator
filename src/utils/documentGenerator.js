@@ -52,6 +52,10 @@ export const generateDocument = (formData, format) => {
     }
     textarea.remove()
   })
+
+  // Remove any export-only UI blocks (e.g., download buttons)
+  const exportSections = clonedDoc.querySelectorAll('[data-export-control="true"]')
+  exportSections.forEach(section => section.remove())
   
   const buttons = clonedDoc.querySelectorAll('button')
   buttons.forEach(btn => btn.remove())

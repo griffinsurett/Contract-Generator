@@ -2,104 +2,109 @@ import React from "react";
 import { useFormContext } from "../contexts/FormContext";
 import { generateDocument } from "../utils/documentGenerator";
 import { getTodayDate, formatDateToFields } from "../utils/dateUtils";
-const currentDate = formatDateToFields(getTodayDate())
+const currentDate = formatDateToFields(getTodayDate());
 
-const HostingSidebarForm = () => {
+const HostingSidebarForm = ({ page = 'provider' }) => {
   const { formData, updateField } = useFormContext();
 
-  return (
-    <div>
-      <h3 className="sidebar-section-title">Service Provider Information</h3>
-      <div className="sidebar-section">
-        <div>
-          <label className="form-label">Contact Name</label>
-          <input
-            type="text"
-            value={formData.serviceProviderName}
-            onChange={(e) => updateField("serviceProviderName", e.target.value)}
-            className="form-input"
-            placeholder="John Doe"
-          />
-        </div>
-        <div>
-          <label className="form-label">Company Name</label>
-          <input
-            type="text"
-            value={formData.serviceProviderCompany}
-            onChange={(e) =>
-              updateField("serviceProviderCompany", e.target.value)
-            }
-            className="form-input"
-            placeholder="Your Company LLC"
-          />
-        </div>
-        <div>
-          <label className="form-label">Location</label>
-          <input
-            type="text"
-            value={formData.serviceProviderLocation}
-            onChange={(e) =>
-              updateField("serviceProviderLocation", e.target.value)
-            }
-            className="form-input"
-            placeholder="123 Main St, City, State, ZIP"
-          />
-        </div>
-      </div>
-
-      <div className="section-divider mt-6">
-        <h3 className="sidebar-section-title">Client Information</h3>
+  if (page === 'provider') {
+    return (
+      <div>
+        <h3 className="sidebar-section-title">Service Provider Information</h3>
         <div className="sidebar-section">
           <div>
-            <label className="form-label">First Name</label>
+            <label className="form-label">Contact Name</label>
             <input
               type="text"
-              value={formData.clientFirstName}
-              onChange={(e) => updateField("clientFirstName", e.target.value)}
+              value={formData.serviceProviderName}
+              onChange={(e) => updateField("serviceProviderName", e.target.value)}
               className="form-input"
-              placeholder="John"
+              placeholder="John Doe"
             />
           </div>
           <div>
             <label className="form-label">Company Name</label>
             <input
               type="text"
-              value={formData.clientCompanyName}
-              onChange={(e) => updateField("clientCompanyName", e.target.value)}
+              value={formData.serviceProviderCompany}
+              onChange={(e) =>
+                updateField("serviceProviderCompany", e.target.value)
+              }
               className="form-input"
-              placeholder="Client Business Inc"
+              placeholder="Your Company LLC"
             />
           </div>
           <div>
-            <label className="form-label">Address</label>
+            <label className="form-label">Location</label>
             <input
               type="text"
-              value={formData.clientAddress}
-              onChange={(e) => updateField("clientAddress", e.target.value)}
+              value={formData.serviceProviderLocation}
+              onChange={(e) =>
+                updateField("serviceProviderLocation", e.target.value)
+              }
               className="form-input"
-              placeholder="456 Business Ave, City, State, ZIP"
+              placeholder="123 Main St, City, State, ZIP"
             />
           </div>
-          <div>
-            <label className="form-label">Email</label>
-            <input
-              type="email"
-              value={formData.clientEmail}
-              onChange={(e) => updateField("clientEmail", e.target.value)}
-              className="form-input"
-              placeholder="client@example.com"
-            />
-          </div>
-          <div>
-            <label className="form-label">Phone Number</label>
-            <input
-              type="tel"
-              value={formData.clientPhone}
-              onChange={(e) => updateField("clientPhone", e.target.value)}
-              className="form-input"
-              placeholder="(555) 123-4567"
-            />
-          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Client page
+  return (
+    <div>
+      <h3 className="sidebar-section-title">Client Information</h3>
+      <div className="sidebar-section">
+        <div>
+          <label className="form-label">First Name</label>
+          <input
+            type="text"
+            value={formData.clientFirstName}
+            onChange={(e) => updateField("clientFirstName", e.target.value)}
+            className="form-input"
+            placeholder="John"
+          />
+        </div>
+        <div>
+          <label className="form-label">Company Name</label>
+          <input
+            type="text"
+            value={formData.clientCompanyName}
+            onChange={(e) => updateField("clientCompanyName", e.target.value)}
+            className="form-input"
+            placeholder="Client Business Inc"
+          />
+        </div>
+        <div>
+          <label className="form-label">Address</label>
+          <input
+            type="text"
+            value={formData.clientAddress}
+            onChange={(e) => updateField("clientAddress", e.target.value)}
+            className="form-input"
+            placeholder="456 Business Ave, City, State, ZIP"
+          />
+        </div>
+        <div>
+          <label className="form-label">Email</label>
+          <input
+            type="email"
+            value={formData.clientEmail}
+            onChange={(e) => updateField("clientEmail", e.target.value)}
+            className="form-input"
+            placeholder="client@example.com"
+          />
+        </div>
+        <div>
+          <label className="form-label">Phone Number</label>
+          <input
+            type="tel"
+            value={formData.clientPhone}
+            onChange={(e) => updateField("clientPhone", e.target.value)}
+            className="form-input"
+            placeholder="(555) 123-4567"
+          />
         </div>
       </div>
     </div>
@@ -108,6 +113,9 @@ const HostingSidebarForm = () => {
 
 const HostingDocument = () => {
   const { formData, updateField } = useFormContext();
+
+  // Check if maintenance is included based on tier
+  const includesMaintenance = formData.selectedTier && formData.selectedTier !== 'hosting-only';
 
   const toggleMaintenanceService = (index) => {
     const current = formData.maintenanceServices || [];
@@ -123,12 +131,20 @@ const HostingDocument = () => {
     updateField("contentUpdates", newUpdates);
   };
 
+  // Dynamic title based on tier
+  const contractTitle = includesMaintenance
+    ? "WEBSITE HOSTING AND MAINTENANCE AGREEMENT"
+    : "WEBSITE HOSTING AGREEMENT";
+
+  // Section number helper - maintenance adds 2 sections (3 and 4)
+  const sectionNum = (baseNum) => includesMaintenance ? baseNum : baseNum - 2;
+
   return (
     <div className="contract-doc">
-      <h1 className="contract-h1">WEBSITE HOSTING AND MAINTENANCE AGREEMENT</h1>
+      <h1 className="contract-h1">{contractTitle}</h1>
 
       <p className="contract-p">
-        This Website Hosting and Maintenance Agreement (the "Agreement") is
+        This {includesMaintenance ? "Website Hosting and Maintenance Agreement" : "Website Hosting Agreement"} (the "Agreement") is
         entered into as of this{" "}
         <input
           type="text"
@@ -247,15 +263,15 @@ const HostingDocument = () => {
       <h2 className="contract-h2">BACKGROUND</h2>
 
       <p className="contract-p">
-        WHEREAS, the Client desires to retain ongoing website hosting,
-        maintenance, and content update services to support the continued
+        WHEREAS, the Client desires to retain ongoing website hosting
+        {includesMaintenance ? ", maintenance, and content update services" : " services"} to support the continued
         functionality and reliability of a completed website delivered by the
         Service Provider or an affiliated contractor;
       </p>
 
       <p className="contract-p">
-        WHEREAS, the Service Provider offers managed hosting facilitation,
-        maintenance, and selective content update services for static websites,
+        WHEREAS, the Service Provider offers managed hosting facilitation
+        {includesMaintenance ? ", maintenance, and selective content update services" : ""} for static websites,
         with limited support for dynamic elements such as contact forms, media,
         and tracking scripts, all facilitated through third-party hosting
         platforms;
@@ -264,8 +280,8 @@ const HostingDocument = () => {
       <p className="contract-p">
         WHEREAS, the Parties seek to establish clear terms that define the scope
         of services, limitations, responsibilities, and protections related to
-        such hosting and maintenance work, while preventing misunderstandings,
-        unplanned expansion of work, or scope creep.
+        such hosting {includesMaintenance ? "and maintenance work" : "services"}, while preventing misunderstandings
+        {includesMaintenance ? ", unplanned expansion of work, or scope creep" : ""}.
       </p>
 
       <p className="contract-p">
@@ -383,105 +399,109 @@ const HostingDocument = () => {
         separately agreed in writing.
       </p>
 
-      <h2 className="contract-h2">
-        3. SCOPE OF MAINTENANCE AND CONTENT UPDATES
-      </h2>
+      {/* Section 3: Only show for maintenance tiers */}
+      {includesMaintenance && (
+        <>
+          <h2 className="contract-h2">
+            3. SCOPE OF MAINTENANCE AND CONTENT UPDATES
+          </h2>
+
+          <p className="contract-p">
+            <strong>3.1 Included Services.</strong> The Service Provider shall
+            provide ongoing Maintenance and limited Content Updates for the hosted
+            website during the term of this Agreement. Valid Content Updates include
+            changes to text, images, videos, metadata, or tracking tags within the
+            website's existing layout and structure. The Client may also request
+            updates such as adding a new service area, replacing a photo or video,
+            or inserting standard analytics or advertising tags, provided these
+            updates remain consistent with the website's current content types and
+            format.
+          </p>
+
+          <p className="contract-p">
+            <strong>3.2 Monthly Software/Package Updates.</strong> The Service
+            Provider will apply routine updates for the static site's build tooling
+            or package dependencies (as applicable to a static site) under the
+            Service Provider's control, excluding any redesign, code refactor,
+            feature addition beyond maintenance scope.
+          </p>
+
+          <p className="contract-p">
+            <strong>3.3 Structural Change Exclusions.</strong> All updates must fit
+            within the framework of the originally designed website and shall not
+            involve any Structural Changes. Specifically, the creation of new pages,
+            redesign of existing layouts, integration of third-party applications,
+            or expansion of site functionality shall not be included in Maintenance
+            or Content Updates. Such requests fall outside the agreed scope and
+            shall require a separate written agreement before any work is initiated.
+          </p>
+
+          <p className="contract-p">
+            <strong>3.4 Request Process.</strong> Requests for Maintenance or
+            Content Updates must be submitted using the Maintenance Request format
+            set out in Exhibit B and will be handled at the Service Provider's
+            discretion, based on reasonableness and workload.
+          </p>
+
+          <p className="contract-p">
+            <strong>3.5 Emergency Measures & Pass-Through Costs.</strong> In the
+            event of abusive traffic (including DDoS), Service Provider may, at its
+            discretion, implement emergency measures (e.g., enable CDN/WAF,
+            temporarily restrict traffic, or place the site in maintenance mode).
+            Any third-party fees, usage surcharges, or configuration costs incurred
+            will be passed through to Client upon invoice. Service Provider is not
+            liable for availability impacts resulting from such events or measures.
+          </p>
+
+          <h2 className="contract-h2">
+            4. LIMITATIONS ON SERVICES / SCOPE CREEP DISCLAIMER
+          </h2>
+
+          <p className="contract-p">
+            The Parties expressly acknowledge that the services covered under this
+            Agreement are limited in nature and scope. Any requests involving new
+            sections, full-page additions, advanced integrations, or any form of
+            redesign or re-architecture of the website shall be considered
+            Structural Changes and are not included in the services defined herein.
+            The Service Provider shall not be obligated to perform such work unless
+            the Parties enter into a separate written agreement outlining the new
+            scope, timeline, and applicable fees.
+          </p>
+
+          <p className="contract-p">
+            Examples of permitted changes under this Agreement include updating
+            existing service areas, replacing or adding photos or videos, revising
+            written content, or inserting tracking or analytics tags within existing
+            pages. Examples of excluded changes include adding new pages, changing
+            navigation menus, building interactive elements, integrating third-party
+            platforms, or altering the overall layout or structure of the site.
+          </p>
+
+          <p className="contract-p">
+            This provision is expressly intended to prevent Scope Creep and to
+            preserve the clarity, enforceability, and contractual integrity of the
+            agreed-upon deliverables. The Service Provider reserves the exclusive
+            right, in its sole discretion, to decline, postpone, or condition the
+            acceptance of any requests that exceed the scope of services defined in
+            this Agreement, unless and until such services are separately negotiated
+            and memorialized in a written agreement signed by both Parties.
+          </p>
+        </>
+      )}
+
+      <h2 className="contract-h2">{sectionNum(5)}. FORM MANAGEMENT AND MONITORING</h2>
 
       <p className="contract-p">
-        <strong>3.1 Included Services.</strong> The Service Provider shall
-        provide ongoing Maintenance and limited Content Updates for the hosted
-        website during the term of this Agreement. Valid Content Updates include
-        changes to text, images, videos, metadata, or tracking tags within the
-        website's existing layout and structure. The Client may also request
-        updates such as adding a new service area, replacing a photo or video,
-        or inserting standard analytics or advertising tags, provided these
-        updates remain consistent with the website's current content types and
-        format.
-      </p>
-
-      <p className="contract-p">
-        <strong>3.2 Monthly Software/Package Updates.</strong> The Service
-        Provider will apply routine updates for the static site's build tooling
-        or package dependencies (as applicable to a static site) under the
-        Service Provider's control, excluding any redesign, code refactor,
-        feature addition beyond maintenance scope.
-      </p>
-
-      <p className="contract-p">
-        <strong>3.3 Structural Change Exclusions.</strong> All updates must fit
-        within the framework of the originally designed website and shall not
-        involve any Structural Changes. Specifically, the creation of new pages,
-        redesign of existing layouts, integration of third-party applications,
-        or expansion of site functionality shall not be included in Maintenance
-        or Content Updates. Such requests fall outside the agreed scope and
-        shall require a separate written agreement before any work is initiated.
-      </p>
-
-      <p className="contract-p">
-        <strong>3.4 Request Process.</strong> Requests for Maintenance or
-        Content Updates must be submitted using the Maintenance Request format
-        set out in Exhibit B and will be handled at the Service Provider's
-        discretion, based on reasonableness and workload.
-      </p>
-
-      <p className="contract-p">
-        <strong>3.5 Emergency Measures & Pass-Through Costs.</strong> In the
-        event of abusive traffic (including DDoS), Service Provider may, at its
-        discretion, implement emergency measures (e.g., enable CDN/WAF,
-        temporarily restrict traffic, or place the site in maintenance mode).
-        Any third-party fees, usage surcharges, or configuration costs incurred
-        will be passed through to Client upon invoice. Service Provider is not
-        liable for availability impacts resulting from such events or measures.
-      </p>
-
-      <h2 className="contract-h2">
-        4. LIMITATIONS ON SERVICES / SCOPE CREEP DISCLAIMER
-      </h2>
-
-      <p className="contract-p">
-        The Parties expressly acknowledge that the services covered under this
-        Agreement are limited in nature and scope. Any requests involving new
-        sections, full-page additions, advanced integrations, or any form of
-        redesign or re-architecture of the website shall be considered
-        Structural Changes and are not included in the services defined herein.
-        The Service Provider shall not be obligated to perform such work unless
-        the Parties enter into a separate written agreement outlining the new
-        scope, timeline, and applicable fees.
-      </p>
-
-      <p className="contract-p">
-        Examples of permitted changes under this Agreement include updating
-        existing service areas, replacing or adding photos or videos, revising
-        written content, or inserting tracking or analytics tags within existing
-        pages. Examples of excluded changes include adding new pages, changing
-        navigation menus, building interactive elements, integrating third-party
-        platforms, or altering the overall layout or structure of the site.
-      </p>
-
-      <p className="contract-p">
-        This provision is expressly intended to prevent Scope Creep and to
-        preserve the clarity, enforceability, and contractual integrity of the
-        agreed-upon deliverables. The Service Provider reserves the exclusive
-        right, in its sole discretion, to decline, postpone, or condition the
-        acceptance of any requests that exceed the scope of services defined in
-        this Agreement, unless and until such services are separately negotiated
-        and memorialized in a written agreement signed by both Parties.
-      </p>
-
-      <h2 className="contract-h2">5. FORM MANAGEMENT AND MONITORING</h2>
-
-      <p className="contract-p">
-        <strong>5.1 Third-Party Processor.</strong> As part of the ongoing
-        Maintenance services, the Service Provider shall be responsible for
-        monitoring the functionality of the website's contact form and ensuring
-        that form submissions are processed and delivered as intended. This
+        <strong>{sectionNum(5)}.1 Third-Party Processor.</strong> {includesMaintenance
+          ? "As part of the ongoing Maintenance services, the Service Provider shall be responsible for monitoring the functionality of the website's contact form and ensuring that form submissions are processed and delivered as intended."
+          : "The Service Provider shall monitor the functionality of the website's contact form and ensure that form submissions are processed and delivered as intended."} This
         includes routine testing of form delivery through the designated
         form-handling tool and addressing minor issues that may interfere with
         proper operation, provided the form configuration remains unchanged.
       </p>
 
       <p className="contract-p">
-        <strong>5.2 Limitations.</strong> The Service Provider facilitates Form
+        <strong>{sectionNum(5)}.2 Limitations.</strong> The Service Provider facilitates Form
         Submission Management through a third-party service, such as Formspree
         or its equivalent, and makes no representation or warranty regarding the
         reliability, uptime, or data processing practices of such external
@@ -491,7 +511,7 @@ const HostingDocument = () => {
         the third-party form service.
       </p>
 
-      <h2 className="contract-h2">6. CLIENT RESPONSIBILITIES</h2>
+      <h2 className="contract-h2">{sectionNum(6)}. CLIENT RESPONSIBILITIES</h2>
 
       <p className="contract-p">
         The Client agrees to fulfill the following responsibilities to enable
@@ -546,7 +566,7 @@ const HostingDocument = () => {
         conflicting instructions.
       </p>
 
-      <h2 className="contract-h2">7. FEES AND PAYMENT TERMS</h2>
+      <h2 className="contract-h2">{sectionNum(7)}. FEES AND PAYMENT TERMS</h2>
 
       <p className="contract-p">
         The Client agrees to pay the Service Provider the applicable fees for
@@ -580,7 +600,7 @@ const HostingDocument = () => {
         incurred during payment.
       </p>
 
-      <h2 className="contract-h2">8. TERM AND TERMINATION</h2>
+      <h2 className="contract-h2">{sectionNum(8)}. TERM AND TERMINATION</h2>
 
       <p className="contract-p">
         This Agreement shall commence on the Effective Date and shall remain in
@@ -620,7 +640,7 @@ const HostingDocument = () => {
         unless otherwise agreed in writing.
       </p>
 
-      <h2 className="contract-h2">9. DATA SECURITY AND PRIVACY COMPLIANCE</h2>
+      <h2 className="contract-h2">{sectionNum(9)}. DATA SECURITY AND PRIVACY COMPLIANCE</h2>
 
       <p className="contract-p">
         The Service Provider shall take reasonable measures to ensure that form
@@ -651,7 +671,7 @@ const HostingDocument = () => {
         direct control.
       </p>
 
-      <h2 className="contract-h2">10. INTELLECTUAL PROPERTY RIGHTS</h2>
+      <h2 className="contract-h2">{sectionNum(10)}. INTELLECTUAL PROPERTY RIGHTS</h2>
 
       <p className="contract-p">
         The Client shall retain full ownership of all original content,
@@ -678,7 +698,7 @@ const HostingDocument = () => {
         of the website during the term of this Agreement.
       </p>
 
-      <h2 className="contract-h2">11. WARRANTIES AND DISCLAIMERS</h2>
+      <h2 className="contract-h2">{sectionNum(11)}. WARRANTIES AND DISCLAIMERS</h2>
 
       <p className="contract-p">
         The Client acknowledges and agrees that the services provided under this
@@ -723,7 +743,7 @@ const HostingDocument = () => {
         fitness for a particular purpose, or noninfringement.
       </p>
 
-      <h2 className="contract-h2">12. LIMITATION OF LIABILITY</h2>
+      <h2 className="contract-h2">{sectionNum(12)}. LIMITATION OF LIABILITY</h2>
 
       <p className="contract-p">
         To the fullest extent permitted by applicable law, the total cumulative
@@ -748,7 +768,7 @@ const HostingDocument = () => {
         essential basis of the bargain between the Parties.
       </p>
 
-      <h2 className="contract-h2">13. INDEMNIFICATION</h2>
+      <h2 className="contract-h2">{sectionNum(13)}. INDEMNIFICATION</h2>
 
       <p className="contract-p">
         The Client agrees to indemnify, defend, and hold harmless the Service
@@ -783,7 +803,7 @@ const HostingDocument = () => {
         occurring during the term of service.
       </p>
 
-      <h2 className="contract-h2">14. CONFIDENTIALITY</h2>
+      <h2 className="contract-h2">{sectionNum(14)}. CONFIDENTIALITY</h2>
 
       <p className="contract-p">
         The Service Provider agrees to maintain the confidentiality of all
@@ -818,7 +838,7 @@ const HostingDocument = () => {
         completion of services.
       </p>
 
-      <h2 className="contract-h2">15. FORCE MAJEURE</h2>
+      <h2 className="contract-h2">{sectionNum(15)}. FORCE MAJEURE</h2>
 
       <p className="contract-p">
         The Service Provider shall not be held liable for any delay or failure
@@ -839,7 +859,7 @@ const HostingDocument = () => {
         practicable following any such disruption.
       </p>
 
-      <h2 className="contract-h2">16. NOTICES</h2>
+      <h2 className="contract-h2">{sectionNum(16)}. NOTICES</h2>
 
       <p className="contract-p">
         All notices, requests, consents, and other communications required or
@@ -862,7 +882,7 @@ const HostingDocument = () => {
         promptly notify the other Party of any changes.
       </p>
 
-      <h2 className="contract-h2">17. CYBERSECURITY DISCLAIMER</h2>
+      <h2 className="contract-h2">{sectionNum(17)}. CYBERSECURITY DISCLAIMER</h2>
 
       <p className="contract-p">
         The Service Provider is not a cybersecurity expert and does not offer
@@ -907,7 +927,7 @@ const HostingDocument = () => {
         intentional misconduct.
       </p>
 
-      <h2 className="contract-h2">18. GOVERNING LAW AND DISPUTE RESOLUTION</h2>
+      <h2 className="contract-h2">{sectionNum(18)}. GOVERNING LAW AND DISPUTE RESOLUTION</h2>
 
       <p className="contract-p">
         This Agreement shall be governed by and construed in accordance with the
@@ -930,7 +950,7 @@ const HostingDocument = () => {
         confidential information.
       </p>
 
-      <h2 className="contract-h2">19. MISCELLANEOUS PROVISIONS</h2>
+      <h2 className="contract-h2">{sectionNum(19)}. MISCELLANEOUS PROVISIONS</h2>
 
       <p className="contract-p">
         Neither Party may assign or transfer its rights or obligations under
@@ -969,11 +989,11 @@ const HostingDocument = () => {
       {/* EXHIBIT A */}
       <div className="contract-section-divider">
         <h2 className="contract-h2 text-center text-[14pt]">
-          EXHIBIT A - SCOPE OF HOSTING AND MAINTENANCE
+          EXHIBIT A - SCOPE OF HOSTING {includesMaintenance ? "AND MAINTENANCE" : "SERVICES"}
         </h2>
 
         <p className="contract-p">
-          This Exhibit outlines the specific hosting and maintenance services to
+          This Exhibit outlines the specific hosting {includesMaintenance ? "and maintenance " : ""}services to
           be provided by the Service Provider under the Agreement. All services
           are limited to the scope described below. Any additional work or
           service beyond this Exhibit shall require a separate written
@@ -987,7 +1007,7 @@ const HostingDocument = () => {
           based on the selected configuration and service level.
         </p>
 
-        <div className="ml-6 mb-4">
+        <div className="flex flex-col ml-6 mb-4">
           <label className="contract-checkbox-label">
             <input
               type="radio"
@@ -1027,56 +1047,61 @@ const HostingDocument = () => {
           coordinate any required account setup unless otherwise agreed.
         </p>
 
-        <h3 className="contract-h3">Maintenance Services</h3>
-        <p className="contract-p">
-          The following maintenance services are included:
-        </p>
+        {/* Maintenance Services - only for maintenance tiers */}
+        {includesMaintenance && (
+          <>
+            <h3 className="contract-h3">Maintenance Services</h3>
+            <p className="contract-p">
+              The following maintenance services are included:
+            </p>
 
-        <div className="ml-6 mb-4">
-          {[
-            "Periodic testing of website uptime and form functionality",
-            "Minor updates to existing content areas (e.g., text, images, video replacements)",
-            "Addition of SEO tracking tags or metadata",
-            "Domain and SSL monitoring (if applicable)",
-            "Troubleshooting broken links or display issues",
-            "Monthly software/package updates applicable to the static site stack",
-          ].map((service, index) => (
-            <label key={index} className="contract-checkbox-label">
-              <input
-                type="checkbox"
-                checked={formData.maintenanceServices?.[index] || false}
-                onChange={() => toggleMaintenanceService(index)}
-                className="contract-checkbox"
-              />
-              <span>{service}</span>
-            </label>
-          ))}
-        </div>
+            <div className="flex flex-col ml-6 mb-4">
+              {[
+                "Periodic testing of website uptime and form functionality",
+                "Minor updates to existing content areas (e.g., text, images, video replacements)",
+                "Addition of SEO tracking tags or metadata",
+                "Domain and SSL monitoring (if applicable)",
+                "Troubleshooting broken links or display issues",
+                "Monthly software/package updates applicable to the static site stack",
+              ].map((service, index) => (
+                <label key={index} className="contract-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.maintenanceServices?.[index] || false}
+                    onChange={() => toggleMaintenanceService(index)}
+                    className="contract-checkbox"
+                  />
+                  <span>{service}</span>
+                </label>
+              ))}
+            </div>
 
-        <h3 className="contract-h3">Content Updates</h3>
-        <p className="contract-p">
-          Permitted updates under this Agreement include only the following:
-        </p>
+            <h3 className="contract-h3">Content Updates</h3>
+            <p className="contract-p">
+              Permitted updates under this Agreement include only the following:
+            </p>
 
-        <div className="ml-6 mb-4">
-          {[
-            "Swapping or editing existing images and video",
-            "Editing or replacing existing text",
-            "Adding new content of the same type or layout (e.g., new city in a list of cities served)",
-            "Replacing contact information or business details",
-            "Adding embedded links or external resources",
-          ].map((update, index) => (
-            <label key={index} className="contract-checkbox-label">
-              <input
-                type="checkbox"
-                checked={formData.contentUpdates?.[index] || false}
-                onChange={() => toggleContentUpdate(index)}
-                className="contract-checkbox"
-              />
-              <span>{update}</span>
-            </label>
-          ))}
-        </div>
+            <div className="flex flex-col ml-6 mb-4">
+              {[
+                "Swapping or editing existing images and video",
+                "Editing or replacing existing text",
+                "Adding new content of the same type or layout (e.g., new city in a list of cities served)",
+                "Replacing contact information or business details",
+                "Adding embedded links or external resources",
+              ].map((update, index) => (
+                <label key={index} className="contract-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.contentUpdates?.[index] || false}
+                    onChange={() => toggleContentUpdate(index)}
+                    className="contract-checkbox"
+                  />
+                  <span>{update}</span>
+                </label>
+              ))}
+            </div>
+          </>
+        )}
 
         <h3 className="contract-h3">Excluded Services</h3>
         <p className="contract-p">
@@ -1101,7 +1126,7 @@ const HostingDocument = () => {
 
         <h3 className="contract-h3">Form Management</h3>
 
-        <div className="ml-6 mb-4">
+        <div className="flex flex-col ml-6 mb-4">
           <label className="contract-checkbox-label">
             <input
               type="checkbox"
@@ -1116,7 +1141,7 @@ const HostingDocument = () => {
           </label>
 
           <p className="mt-3 mb-2">Formspree account managed by:</p>
-          <div className="ml-6">
+          <div className="flex flex-col ml-6">
             <label className="contract-checkbox-label">
               <input
                 type="radio"
@@ -1162,7 +1187,7 @@ const HostingDocument = () => {
         <p className="contract-p">
           <strong>Billing Period:</strong>
         </p>
-        <div className="ml-6 mb-4">
+        <div className="flex flex-col ml-6 mb-4">
           <label className="contract-checkbox-label">
             <input
               type="radio"
@@ -1171,15 +1196,6 @@ const HostingDocument = () => {
               className="contract-checkbox"
             />
             <span>Monthly</span>
-          </label>
-          <label className="contract-checkbox-label">
-            <input
-              type="radio"
-              checked={formData.billingPeriod === "quarterly"}
-              onChange={() => updateField("billingPeriod", "quarterly")}
-              className="contract-checkbox"
-            />
-            <span>Quarterly</span>
           </label>
           <label className="contract-checkbox-label">
             <input
@@ -1206,53 +1222,82 @@ const HostingDocument = () => {
 
         <p className="contract-p">
           The Client agrees to pay the Service Provider the following fee for
-          hosting and maintenance services:
+          hosting {includesMaintenance ? "and maintenance " : ""}services:
         </p>
 
-        <p className="contract-p">
-          <strong>Total Fee:</strong> $
-          <input
-            type="number"
-            step="0.01"
-            value={formData.totalFee}
-            onChange={(e) => updateField("totalFee", e.target.value)}
-            placeholder="0.00"
-            className="contract-input w-[80px]"
-          />{" "}
-          per{" "}
-          <label className="contract-radio-inline">
-            <input
-              type="radio"
-              checked={formData.feeFrequency === "month"}
-              onChange={() => updateField("feeFrequency", "month")}
-              className="contract-radio"
-            />
-            month
-          </label>
-          <label className="contract-radio-inline">
-            <input
-              type="radio"
-              checked={formData.feeFrequency === "quarter"}
-              onChange={() => updateField("feeFrequency", "quarter")}
-              className="contract-radio"
-            />
-            quarter
-          </label>
-          <label className="contract-radio-inline">
-            <input
-              type="radio"
-              checked={formData.feeFrequency === "year"}
-              onChange={() => updateField("feeFrequency", "year")}
-              className="contract-radio"
-            />
-            year
-          </label>
-        </p>
+        {/* Show tier-based pricing when tier is selected (client view) */}
+        {formData.selectedTier ? (
+          <div className="ml-6 mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="contract-p mb-2">
+              <strong>Selected Plan:</strong>{" "}
+              {formData.selectedTier === 'hosting-only' && 'Hosting Only'}
+              {formData.selectedTier === 'hosting-basic' && 'Hosting + Maintenance Basic (3 content updates/week)'}
+              {formData.selectedTier === 'hosting-priority' && 'Hosting + Maintenance Priority (15 content updates/week)'}
+            </p>
+            <p className="contract-p text-lg font-semibold">
+              <strong>Monthly Fee:</strong>{" "}
+              {formData.selectedTier === 'hosting-only' && '$50.00/month'}
+              {formData.selectedTier === 'hosting-basic' && '$80.00/month'}
+              {formData.selectedTier === 'hosting-priority' && '$100.00/month'}
+            </p>
+          </div>
+        ) : (
+          /* Admin view - allow manual fee entry or show tier options */
+          <>
+            <div className="ml-6 mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-sm text-gray-600 mb-3">
+                <strong>Standard Tier Pricing (client will select):</strong>
+              </p>
+              <ul className="text-sm text-gray-700 space-y-1 mb-3">
+                <li>• <strong>Hosting Only:</strong> $50/month</li>
+                <li>• <strong>Basic Maintenance:</strong> $80/month (3 content updates/week)</li>
+                <li>• <strong>Priority Maintenance:</strong> $100/month (15 content updates/week)</li>
+              </ul>
+              <p className="text-xs text-gray-500 italic">
+                The client will choose their plan when signing the contract.
+              </p>
+            </div>
+
+            <p className="contract-p">
+              <strong>Or set a custom fee:</strong> $
+              <input
+                type="number"
+                step="0.01"
+                value={formData.totalFee}
+                onChange={(e) => updateField("totalFee", e.target.value)}
+                placeholder="0.00"
+                className="contract-input w-[80px]"
+              />{" "}
+              per
+            </p>
+
+            <div className="flex flex-col ml-6 mb-4">
+              <label className="contract-checkbox-label">
+                <input
+                  type="radio"
+                  checked={formData.feeFrequency === "month"}
+                  onChange={() => updateField("feeFrequency", "month")}
+                  className="contract-checkbox"
+                />
+                <span>month</span>
+              </label>
+              <label className="contract-checkbox-label">
+                <input
+                  type="radio"
+                  checked={formData.feeFrequency === "year"}
+                  onChange={() => updateField("feeFrequency", "year")}
+                  className="contract-checkbox"
+                />
+                <span>year</span>
+              </label>
+            </div>
+          </>
+        )}
 
         <p className="contract-p">
           <strong>Invoicing Method:</strong>
         </p>
-        <div className="ml-6 mb-4">
+        <div className="flex flex-col ml-6 mb-4">
           <label className="contract-checkbox-label">
             <input
               type="radio"
@@ -1329,9 +1374,22 @@ const HostingDocument = () => {
           <div className="contract-signature-block">
             <p className="contract-p-bold mb-4">FOR THE SERVICE PROVIDER</p>
             <p className="contract-p">{formData.serviceProviderCompany}</p>
-            <p className="contract-p mt-6">
-              Signature: _________________________
-            </p>
+            {formData.developerSignature ? (
+              <div className="mt-6">
+                <p className="contract-p mb-2">Signature:</p>
+                <div className="border-b-2 border-gray-400 pb-2 inline-block">
+                  <img
+                    src={formData.developerSignature}
+                    alt="Service provider signature"
+                    className="h-16 max-w-[200px] object-contain"
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="contract-p mt-6">
+                Signature: _________________________
+              </p>
+            )}
             <p className="contract-p mt-4">
               Name: {formData.serviceProviderName}
             </p>
@@ -1361,7 +1419,7 @@ const HostingDocument = () => {
       </div>
 
       {/* DOWNLOAD BUTTONS */}
-      <div className="contract-section-divider text-center">
+      <div className="contract-section-divider text-center" data-export-control="true">
         <h3 className="contract-h3 text-center mb-5">Download Contract</h3>
         <div className="flex gap-4 justify-center">
           <button
@@ -1389,6 +1447,7 @@ export const HostingContract = {
     serviceProviderName: "",
     serviceProviderCompany: "",
     serviceProviderLocation: "",
+    developerSignature: "", // Developer signature from business profile
     clientFirstName: "",
     clientCompanyName: "",
     clientAddress: "",
@@ -1407,12 +1466,14 @@ export const HostingContract = {
     billingPeriod: "monthly",
     totalFee: "",
     feeFrequency: "month",
-    invoicingMethod: "upfront",
+    invoicingMethod: "recurring",
     invoicingOther: "",
     lateFeeAmount: "",
     lateFeePercentage: "",
     lateFeeDays: "",
     additionalNotes: "",
+    // Tier selection: 'hosting-only', 'hosting-basic', 'hosting-priority'
+    selectedTier: null,
   },
   SidebarForm: HostingSidebarForm,
   Document: HostingDocument,

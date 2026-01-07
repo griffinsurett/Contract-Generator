@@ -1,133 +1,138 @@
 import React from 'react'
 import { useFormContext } from '../contexts/FormContext'
 
-const NDASidebarForm = () => {
+const NDASidebarForm = ({ page = 'provider' }) => {
   const { formData, updateField } = useFormContext()
 
-  return (
-    <div>
-      <h3 className="sidebar-section-title">Disclosing Party Information</h3>
-      <div className="sidebar-section mb-8">
-        <div>
-          <label className="form-label">Contact Name</label>
-          <input
-            type="text"
-            value={formData.disclosingPartyName}
-            onChange={(e) => updateField('disclosingPartyName', e.target.value)}
-            className="form-input"
-            placeholder="John Doe"
-          />
-        </div>
-        <div>
-          <label className="form-label">Company Name</label>
-          <input
-            type="text"
-            value={formData.disclosingPartyCompany}
-            onChange={(e) => updateField('disclosingPartyCompany', e.target.value)}
-            className="form-input"
-            placeholder="Disclosing Company Inc"
-          />
-        </div>
-        <div>
-          <label className="form-label">Address</label>
-          <input
-            type="text"
-            value={formData.disclosingPartyAddress}
-            onChange={(e) => updateField('disclosingPartyAddress', e.target.value)}
-            className="form-input"
-            placeholder="123 Business St, City, State, ZIP"
-          />
-        </div>
-      </div>
-
-      <div className="section-divider">
-        <h3 className="sidebar-section-title">Receiving Party Information</h3>
-        <div className="sidebar-section">
+  if (page === 'provider') {
+    return (
+      <div>
+        <h3 className="sidebar-section-title">Disclosing Party Information</h3>
+        <div className="sidebar-section mb-8">
           <div>
             <label className="form-label">Contact Name</label>
             <input
               type="text"
-              value={formData.receivingPartyName}
-              onChange={(e) => updateField('receivingPartyName', e.target.value)}
+              value={formData.disclosingPartyName}
+              onChange={(e) => updateField('disclosingPartyName', e.target.value)}
               className="form-input"
-              placeholder="Jane Smith"
+              placeholder="John Doe"
             />
           </div>
           <div>
             <label className="form-label">Company Name</label>
             <input
               type="text"
-              value={formData.receivingPartyCompany}
-              onChange={(e) => updateField('receivingPartyCompany', e.target.value)}
+              value={formData.disclosingPartyCompany}
+              onChange={(e) => updateField('disclosingPartyCompany', e.target.value)}
               className="form-input"
-              placeholder="Receiving Company LLC"
+              placeholder="Disclosing Company Inc"
             />
           </div>
           <div>
             <label className="form-label">Address</label>
             <input
               type="text"
-              value={formData.receivingPartyAddress}
-              onChange={(e) => updateField('receivingPartyAddress', e.target.value)}
+              value={formData.disclosingPartyAddress}
+              onChange={(e) => updateField('disclosingPartyAddress', e.target.value)}
               className="form-input"
-              placeholder="456 Commerce Ave, City, State, ZIP"
-            />
-          </div>
-          <div>
-            <label className="form-label">Email</label>
-            <input
-              type="email"
-              value={formData.receivingPartyEmail}
-              onChange={(e) => updateField('receivingPartyEmail', e.target.value)}
-              className="form-input"
-              placeholder="receiver@example.com"
-            />
-          </div>
-          <div>
-            <label className="form-label">Phone Number</label>
-            <input
-              type="tel"
-              value={formData.receivingPartyPhone}
-              onChange={(e) => updateField('receivingPartyPhone', e.target.value)}
-              className="form-input"
-              placeholder="(555) 987-6543"
+              placeholder="123 Business St, City, State, ZIP"
             />
           </div>
         </div>
-      </div>
 
-      <div className="section-divider mt-6">
-        <h3 className="sidebar-section-title">Agreement Details</h3>
-        <div className="sidebar-section">
-          <div>
-            <label className="form-label">Purpose of Disclosure</label>
-            <input
-              type="text"
-              value={formData.purposeOfDisclosure}
-              onChange={(e) => updateField('purposeOfDisclosure', e.target.value)}
-              className="form-input"
-              placeholder="e.g., evaluating potential partnership"
-            />
+        <div className="section-divider mt-6">
+          <h3 className="sidebar-section-title">Agreement Details</h3>
+          <div className="sidebar-section">
+            <div>
+              <label className="form-label">Purpose of Disclosure</label>
+              <input
+                type="text"
+                value={formData.purposeOfDisclosure}
+                onChange={(e) => updateField('purposeOfDisclosure', e.target.value)}
+                className="form-input"
+                placeholder="e.g., evaluating potential partnership"
+              />
+            </div>
+            <div>
+              <label className="form-label">Governing State</label>
+              <input
+                type="text"
+                value={formData.governingState}
+                onChange={(e) => updateField('governingState', e.target.value)}
+                className="form-input"
+                placeholder="New Jersey"
+              />
+            </div>
+            <div>
+              <label className="form-label">Additional Terms (Optional)</label>
+              <textarea
+                value={formData.additionalTerms}
+                onChange={(e) => updateField('additionalTerms', e.target.value)}
+                className="form-textarea"
+                placeholder="Enter any additional terms or clauses..."
+              />
+            </div>
           </div>
-          <div>
-            <label className="form-label">Governing State</label>
-            <input
-              type="text"
-              value={formData.governingState}
-              onChange={(e) => updateField('governingState', e.target.value)}
-              className="form-input"
-              placeholder="New Jersey"
-            />
-          </div>
-          <div>
-            <label className="form-label">Additional Terms (Optional)</label>
-            <textarea
-              value={formData.additionalTerms}
-              onChange={(e) => updateField('additionalTerms', e.target.value)}
-              className="form-textarea"
-              placeholder="Enter any additional terms or clauses..."
-            />
-          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Client page (Receiving Party)
+  return (
+    <div>
+      <h3 className="sidebar-section-title">Receiving Party Information</h3>
+      <div className="sidebar-section">
+        <div>
+          <label className="form-label">Contact Name</label>
+          <input
+            type="text"
+            value={formData.receivingPartyName}
+            onChange={(e) => updateField('receivingPartyName', e.target.value)}
+            className="form-input"
+            placeholder="Jane Smith"
+          />
+        </div>
+        <div>
+          <label className="form-label">Company Name</label>
+          <input
+            type="text"
+            value={formData.receivingPartyCompany}
+            onChange={(e) => updateField('receivingPartyCompany', e.target.value)}
+            className="form-input"
+            placeholder="Receiving Company LLC"
+          />
+        </div>
+        <div>
+          <label className="form-label">Address</label>
+          <input
+            type="text"
+            value={formData.receivingPartyAddress}
+            onChange={(e) => updateField('receivingPartyAddress', e.target.value)}
+            className="form-input"
+            placeholder="456 Commerce Ave, City, State, ZIP"
+          />
+        </div>
+        <div>
+          <label className="form-label">Email</label>
+          <input
+            type="email"
+            value={formData.receivingPartyEmail}
+            onChange={(e) => updateField('receivingPartyEmail', e.target.value)}
+            className="form-input"
+            placeholder="receiver@example.com"
+          />
+        </div>
+        <div>
+          <label className="form-label">Phone Number</label>
+          <input
+            type="tel"
+            value={formData.receivingPartyPhone}
+            onChange={(e) => updateField('receivingPartyPhone', e.target.value)}
+            className="form-input"
+            placeholder="(555) 987-6543"
+          />
         </div>
       </div>
     </div>

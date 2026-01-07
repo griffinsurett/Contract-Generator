@@ -59,26 +59,38 @@ body {
 }
 
 /* Contract Document Container */
+/* Contract Document Container - ADD PROPER MARGINS */
 @utility contract-doc {
-  @apply bg-white shadow-[0_10px_40px_rgba(0,0,0,0.2)] min-h-[11in] p-[1in] font-['Times_New_Roman',serif] text-[11pt] leading-relaxed text-black;
+  @apply bg-white shadow-[0_10px_40px_rgba(0,0,0,0.2)] min-h-[11in] font-['Times_New_Roman',serif] text-[11pt] leading-relaxed text-black;
+  /* Add proper page margins */
+  padding: 1in 1.25in;
+  max-width: 8.5in;
+  margin: 2rem auto;
 }
 
-/* Contract Headings */
+/* Contract Headings - BETTER SPACING */
 @utility contract-h1 {
-  @apply text-center font-bold text-[16pt] mb-6 font-['Times_New_Roman',serif];
+  @apply text-center font-bold text-[16pt] font-['Times_New_Roman',serif];
+  margin-bottom: 1.5rem;
+  margin-top: 0;
 }
 
 @utility contract-h2 {
-  @apply font-bold text-[12pt] mt-6 mb-3 font-['Times_New_Roman',serif];
+  @apply font-bold text-[12pt] font-['Times_New_Roman',serif];
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 @utility contract-h3 {
-  @apply font-bold text-[11pt] mt-4 mb-3 font-['Times_New_Roman',serif];
+  @apply font-bold text-[11pt] font-['Times_New_Roman',serif];
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
 }
 
-/* Contract Paragraphs */
+/* Contract Paragraphs - REDUCE BOTTOM MARGIN */
 @utility contract-p {
-  @apply mb-3 text-justify font-['Times_New_Roman',serif] text-[11pt] leading-relaxed;
+  @apply text-justify font-['Times_New_Roman',serif] text-[11pt] leading-relaxed;
+  margin-bottom: 0.75rem; /* Changed from 3 (mb-3) */
 }
 
 @utility contract-p-center {
@@ -89,55 +101,80 @@ body {
   @apply contract-p font-bold;
 }
 
-/* Contract Inputs */
+/* Contract Inputs - MIN-WIDTH BASED */
 @utility contract-input {
-  @apply border-none border-b border-gray-600 outline-none font-['Times_New_Roman',serif] text-[11pt] px-1 py-0.5 bg-transparent text-center focus:border-blue-500;
+  @apply border-none border-b border-gray-600 outline-none font-['Times_New_Roman',serif] text-[11pt] bg-transparent text-center focus:border-blue-500;
+  padding: 1px 3px;
+  margin: 0 2px;
+  min-width: 60px; /* Base min-width */
+  width: auto;
+  display: inline-block;
 }
 
 @utility contract-input-inline {
-  @apply contract-input font-bold text-left min-w-[100px];
+  @apply contract-input font-bold text-left;
+  margin: 0 3px;
+  min-width: 100px;
 }
 
 @utility contract-input-short {
-  @apply contract-input w-[30px];
+  @apply contract-input;
+  min-width: 30px;
+  max-width: 50px;
 }
 
 @utility contract-input-medium {
-  @apply contract-input w-[100px];
+  @apply contract-input;
+  min-width: 100px;
+  max-width: 150px;
 }
 
 @utility contract-input-long {
-  @apply contract-input w-[300px];
+  @apply contract-input;
+  min-width: 200px;
+  max-width: 350px;
 }
 
 @utility contract-input-xlong {
-  @apply contract-input w-[400px];
+  @apply contract-input;
+  min-width: 300px;
+  max-width: 500px;
 }
 
 /* Contract Special Elements */
 @utility contract-date-picker {
-  @apply ml-1 px-1 py-0.5 text-[10pt] border border-gray-400 rounded cursor-pointer;
+  @apply border border-gray-400 rounded cursor-pointer;
+  margin-left: 4px;
+  padding: 1px 3px;
+  font-size: 10pt;
 }
 
 @utility contract-textarea {
-  @apply w-full min-h-[80px] p-3 font-['Times_New_Roman',serif] text-[11pt] border border-gray-400 rounded resize-y;
+  @apply w-full min-h-[80px] p-2 font-['Times_New_Roman',serif] text-[11pt] border border-gray-400 rounded resize-y;
+  margin-top: 0.5rem;
 }
 
-/* Checkboxes and Radios in Contract */
+/* Checkboxes and Radios in Contract - TIGHTER SPACING */
 @utility contract-checkbox-label {
-  @apply flex items-start mb-2 cursor-pointer;
+  @apply flex items-center cursor-pointer gap-1;
+  margin-bottom: 0.5rem; /* Reduced from 0.5rem (mb-2) */
 }
 
 @utility contract-checkbox {
-  @apply mt-1 mr-2 cursor-pointer;
+  @apply cursor-pointer;
+  margin-top: 3px;
+  margin-right: 6px; /* Reduced spacing */
 }
 
 @utility contract-radio {
-  @apply mr-1 ml-2 cursor-pointer;
+  @apply cursor-pointer;
+  margin-right: 4px;
+  margin-left: 6px;
 }
 
 @utility contract-radio-inline {
-  @apply inline-flex items-center ml-2 cursor-pointer;
+  @apply inline-flex items-center cursor-pointer;
+  margin-left: 6px;
 }
 
 /* Contract Sections */

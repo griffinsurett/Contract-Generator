@@ -1,8 +1,12 @@
 import { HostingContract } from './HostingContract'
 import { NDAContract } from './NDAContract'
+import { GoogleWorkspaceContract } from './GoogleWorkspaceContract'
+import { WebDesignContract } from './WebDesignContract'
 
 export const allContracts = [
+  WebDesignContract,
   HostingContract,
+  GoogleWorkspaceContract,
   NDAContract
 ]
 

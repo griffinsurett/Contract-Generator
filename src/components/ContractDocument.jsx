@@ -188,13 +188,13 @@ const ContractDocument = ({ formData, updateField }) => {
           placeholder="Client First Name"
           style={{...inlineEditableStyle, width: '150px'}}
         />
-        {' '}of{' '}
+        {' '}a{' '}
         <input
           type="text"
           value={clientCompanyName}
           onChange={(e) => updateField('clientCompanyName', e.target.value)}
           placeholder="Client Company Name"
-          style={{...inlineEditableStyle, width: '250px'}}
+          style={{...inlineEditableStyle}}
         />
         , an individual or business entity with its principal address at{' '}
         <input
@@ -202,7 +202,7 @@ const ContractDocument = ({ formData, updateField }) => {
           value={clientAddress}
           onChange={(e) => updateField('clientAddress', e.target.value)}
           placeholder="Client Address"
-          style={{...inlineEditableStyle, width: '300px'}}
+          style={{...inlineEditableStyle}}
         />
         , E-mail:{' '}
         <input
@@ -210,7 +210,7 @@ const ContractDocument = ({ formData, updateField }) => {
           value={clientEmail}
           onChange={(e) => updateField('clientEmail', e.target.value)}
           placeholder="client@example.com"
-          style={{...inlineEditableStyle, width: '200px'}}
+          style={{...inlineEditableStyle}}
         />
         , Phone Number:{' '}
         <input
@@ -218,7 +218,7 @@ const ContractDocument = ({ formData, updateField }) => {
           value={clientPhone}
           onChange={(e) => updateField('clientPhone', e.target.value)}
           placeholder="(555) 123-4567"
-          style={{...inlineEditableStyle, width: '150px'}}
+          style={{...inlineEditableStyle}}
         />
         {' '}(hereinafter referred to as the "Client")
       </p>
@@ -1007,7 +1007,6 @@ const ContractDocument = ({ formData, updateField }) => {
         borderTop: '2px solid #000',
         textAlign: 'center'
       }}>
-        <h3 style={{...h3Style, textAlign: 'center', marginBottom: '20px'}}>Download Contract</h3>
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
           <button
             onClick={() => generateDocument(formData, 'pdf')}
