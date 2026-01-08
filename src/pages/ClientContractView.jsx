@@ -849,7 +849,7 @@ const ClientContractView = () => {
                 </div>
                 {needsTierFirst && selectedTier && (
                   <span className="text-sm text-blue-600">
-                    Plan: <strong>
+                    Selected: <strong>
                       {selectedTier === 'hosting-only' && 'Hosting Only ($50/mo)'}
                       {selectedTier === 'hosting-basic' && 'Basic Maintenance ($80/mo)'}
                       {selectedTier === 'hosting-priority' && 'Priority Maintenance ($100/mo)'}
