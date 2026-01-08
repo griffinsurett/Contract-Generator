@@ -114,16 +114,16 @@ function App() {
   }
 
   // Generate link for current contract or workflow
-  const handleGenerateLink = () => {
+  const handleGenerateLink = async () => {
     let link
     if (workflowInfo?.isWorkflow) {
-      link = generateWorkflowLink(
+      link = await generateWorkflowLink(
         workflowInfo.workflow,
         contractForm.formData,
         {}
       )
     } else {
-      link = generateContractLink(
+      link = await generateContractLink(
         contractForm.currentContract,
         contractForm.formData,
         {}

@@ -310,7 +310,7 @@ const WebDesignSidebarForm = ({ page = 'provider' }) => {
 };
 
 const WebDesignDocument = () => {
-  const { formData, updateField, isClientView } = useFormContext();
+  const { formData, updateField, isClientView, signatureData, typedName } = useFormContext();
 
   const toggleDesignService = (index) => {
     const current = formData.designServices || [];
@@ -1576,59 +1576,71 @@ const WebDesignDocument = () => {
         </p>
       </div>
 
-      {/* SIGNATURES SECTION - Only show in admin view (client signs via sticky panel) */}
-      {!isClientView && (
-        <div className="contract-signature-section">
-          <h3 className="contract-h3">SIGNATURES</h3>
+      {/* SIGNATURES SECTION - Always show so it appears in PDF */}
+      <div className="contract-signature-section">
+        <h3 className="contract-h3">SIGNATURES</h3>
 
-          <div className="grid grid-cols-2 gap-8">
-            <div className="contract-signature-block">
-              <p className="contract-p-bold mb-4">FOR THE DEVELOPER</p>
-              <p className="contract-p">{formData.developerCompany}</p>
-              {formData.developerSignature ? (
-                <div className="mt-6">
-                  <p className="contract-p mb-2">Signature:</p>
-                  <div className="border-b-2 border-gray-400 pb-2 inline-block">
-                    <img
-                      src={formData.developerSignature}
-                      alt="Developer signature"
-                      className="h-16 max-w-[200px] object-contain"
-                    />
-                  </div>
+        <div className="grid grid-cols-2 gap-8">
+          <div className="contract-signature-block">
+            <p className="contract-p-bold mb-4">FOR THE DEVELOPER</p>
+            <p className="contract-p">{formData.developerCompany}</p>
+            {formData.developerSignature ? (
+              <div className="mt-6">
+                <p className="contract-p mb-2">Signature:</p>
+                <div className="border-b-2 border-gray-400 pb-2 inline-block">
+                  <img
+                    src={formData.developerSignature}
+                    alt="Developer signature"
+                    className="h-16 max-w-[200px] object-contain"
+                  />
                 </div>
-              ) : (
-                <p className="contract-p mt-6">
-                  Signature: _________________________
-                </p>
-              )}
-              <p className="contract-p mt-4">Name: {formData.developerName}</p>
-              <p className="contract-p mt-4">
-                Date:{" "}
-                {formData.day && formData.month && formData.year
-                  ? `${formData.month} ${formData.day}, ${formData.year}`
-                  : ""}
-              </p>
-            </div>
-
-            <div>
-              <p className="contract-p-bold mb-4">FOR THE CLIENT</p>
-              <p className="contract-p">{formData.clientCompanyName}</p>
+              </div>
+            ) : (
               <p className="contract-p mt-6">
                 Signature: _________________________
               </p>
-              <p className="contract-p mt-4">
-                Name: {formData.clientName}
+            )}
+            <p className="contract-p mt-4">Name: {formData.developerName}</p>
+            <p className="contract-p mt-4">
+              Date:{" "}
+              {formData.day && formData.month && formData.year
+                ? `${formData.month} ${formData.day}, ${formData.year}`
+                : ""}
+            </p>
+          </div>
+
+          <div>
+            <p className="contract-p-bold mb-4">FOR THE CLIENT</p>
+            <p className="contract-p">{formData.clientCompanyName}</p>
+            {/* Show client signature if available (from signing flow) */}
+            {signatureData ? (
+              <div className="mt-6">
+                <p className="contract-p mb-2">Signature:</p>
+                <div className="border-b-2 border-gray-400 pb-2 inline-block">
+                  <img
+                    src={signatureData}
+                    alt="Client signature"
+                    className="h-16 max-w-[200px] object-contain"
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="contract-p mt-6">
+                Signature: _________________________
               </p>
-              <p className="contract-p mt-4">
-                Date:{" "}
-                {formData.day && formData.month && formData.year
-                  ? `${formData.month} ${formData.day}, ${formData.year}`
-                  : ""}
-              </p>
-            </div>
+            )}
+            <p className="contract-p mt-4">
+              Name: {typedName || formData.clientName}
+            </p>
+            <p className="contract-p mt-4">
+              Date:{" "}
+              {formData.day && formData.month && formData.year
+                ? `${formData.month} ${formData.day}, ${formData.year}`
+                : ""}
+            </p>
           </div>
         </div>
-      )}
+      </div>
 
       {/* DOWNLOAD BUTTONS - Admin view only */}
       {!isClientView && (

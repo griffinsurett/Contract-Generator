@@ -839,7 +839,7 @@ const ClientContractView = () => {
           typedName={typedName}
           isClientView={true}
         >
-          <div className="max-w-4xl mx-auto">
+          <div className="w-full mx-auto">
             {/* Render contract - pointer-events-none with selective override via pointer-events-auto on interactive elements */}
             <div ref={contractDocRef} className="pointer-events-none">
               {DocumentComponent && <DocumentComponent />}

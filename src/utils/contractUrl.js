@@ -1,24 +1,66 @@
-// Fields to exclude from URL encoding (too large for URL headers)
-const EXCLUDED_FIELDS = ['developerSignature']
-
 /**
- * Filter out large fields that shouldn't be in the URL
+ * Compress a signature image (base64 data URL) to reduce size
+ * Resizes to max 300px width and converts to JPEG with quality reduction
  */
-const filterFormData = (formData) => {
-  const filtered = { ...formData }
-  EXCLUDED_FIELDS.forEach(field => {
-    delete filtered[field]
+const compressSignature = (dataUrl, maxWidth = 300, quality = 0.6) => {
+  return new Promise((resolve) => {
+    if (!dataUrl || !dataUrl.startsWith('data:image')) {
+      resolve(dataUrl)
+      return
+    }
+
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      let { width, height } = img
+
+      // Scale down if wider than maxWidth
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width
+        width = maxWidth
+      }
+
+      canvas.width = width
+      canvas.height = height
+
+      const ctx = canvas.getContext('2d')
+      // White background for JPEG (transparent becomes black otherwise)
+      ctx.fillStyle = '#FFFFFF'
+      ctx.fillRect(0, 0, width, height)
+      ctx.drawImage(img, 0, 0, width, height)
+
+      // Convert to JPEG with reduced quality
+      const compressed = canvas.toDataURL('image/jpeg', quality)
+      resolve(compressed)
+    }
+    img.onerror = () => resolve(dataUrl) // Fallback to original on error
+    img.src = dataUrl
   })
-  return filtered
 }
 
 /**
- * Encode contract data to a URL-safe string
+ * Process form data, compressing any signature fields
  */
-export const encodeContractData = (contractId, formData, options = {}) => {
+const processFormData = async (formData) => {
+  const processed = { ...formData }
+
+  // Compress developerSignature if present
+  if (processed.developerSignature) {
+    processed.developerSignature = await compressSignature(processed.developerSignature)
+  }
+
+  return processed
+}
+
+/**
+ * Encode contract data to a URL-safe string (async to handle compression)
+ */
+export const encodeContractData = async (contractId, formData, options = {}) => {
+  const processedFormData = await processFormData(formData)
+
   const payload = {
     contractId,
-    formData: filterFormData(formData),
+    formData: processedFormData,
     options, // service tiers, pricing, etc.
     createdAt: new Date().toISOString()
   }
@@ -45,8 +87,8 @@ export const decodeContractData = (encodedString) => {
 /**
  * Generate a shareable link for the contract
  */
-export const generateContractLink = (contractId, formData, options = {}) => {
-  const encoded = encodeContractData(contractId, formData, options)
+export const generateContractLink = async (contractId, formData, options = {}) => {
+  const encoded = await encodeContractData(contractId, formData, options)
   const baseUrl = window.location.origin
   return `${baseUrl}/sign/${encoded}`
 }
@@ -55,11 +97,13 @@ export const generateContractLink = (contractId, formData, options = {}) => {
  * Generate a shareable link for a workflow (multiple contracts in sequence)
  * Step is now managed via URL query params (?step=0, ?step=1, etc.)
  */
-export const generateWorkflowLink = (contractIds, formData, options = {}) => {
+export const generateWorkflowLink = async (contractIds, formData, options = {}) => {
+  const processedFormData = await processFormData(formData)
+
   const payload = {
     isWorkflow: true,
     workflow: contractIds,
-    formData: filterFormData(formData),
+    formData: processedFormData,
     options,
     createdAt: new Date().toISOString()
   }
