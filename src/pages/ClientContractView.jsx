@@ -101,12 +101,14 @@ const ClientContractView = () => {
         }
 
         // Clear localStorage only when starting fresh (first contract with no existing workflow data)
-        const isFirstContract = !decoded.isWorkflow || decoded.currentIndex === 0
+        // Use currentStep from URL params (defaults to 0)
+        const isFirstContract = !decoded.isWorkflow || currentStep === 0
         if (isFirstContract) {
           // Only clear if there's no workflowData (meaning truly fresh start, not a refresh mid-workflow)
           const hasWorkflowContext = decoded.options?.workflowData?.previousContracts?.length > 0
           if (!hasWorkflowContext) {
             localStorage.removeItem('signedContractHtmls')
+            localStorage.removeItem('workflowSignatureStates')
           }
         }
       } else {
@@ -144,6 +146,69 @@ const ClientContractView = () => {
     }
   }
 
+  // Save signature state to localStorage for the current contract
+  const saveSignatureState = (contractId, signature, agreed, name) => {
+    try {
+      const signatureStates = JSON.parse(localStorage.getItem('workflowSignatureStates') || '{}')
+      signatureStates[contractId] = {
+        signatureData: signature,
+        agreedToTerms: agreed,
+        typedName: name,
+        savedAt: new Date().toISOString()
+      }
+      localStorage.setItem('workflowSignatureStates', JSON.stringify(signatureStates))
+    } catch (err) {
+      console.warn('Could not save signature state:', err.message)
+    }
+  }
+
+  // Restore signature state from localStorage for a contract
+  const restoreSignatureState = (contractId) => {
+    try {
+      const signatureStates = JSON.parse(localStorage.getItem('workflowSignatureStates') || '{}')
+      return signatureStates[contractId] || null
+    } catch {
+      return null
+    }
+  }
+
+  // Restore signature state when navigating to a contract (including back navigation)
+  useEffect(() => {
+    if (!contractData) return
+    const currentContractId = getCurrentContractId()
+    if (!currentContractId) return
+
+    const savedState = restoreSignatureState(currentContractId)
+    if (savedState) {
+      // Restore the saved state
+      setAgreedToTerms(savedState.agreedToTerms || false)
+      setTypedName(savedState.typedName || '')
+      if (savedState.signatureData) {
+        setSignatureData(savedState.signatureData)
+        setHasSigned(true)
+        // Restore signature to canvas if pad exists
+        if (signaturePadRef.current) {
+          const img = new Image()
+          img.onload = () => {
+            signaturePadRef.current.clear()
+            const canvas = signatureCanvasRef.current
+            const ctx = canvas.getContext('2d')
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+          }
+          img.src = savedState.signatureData
+        }
+      }
+    } else {
+      // No saved state - reset for fresh contract
+      setAgreedToTerms(false)
+      setHasSigned(false)
+      setSignatureData(null)
+      if (signaturePadRef.current) {
+        signaturePadRef.current.clear()
+      }
+    }
+  }, [currentStep, contractData])
+
   // Reset workflow - navigates back to the first contract with fresh state
   const handleResetWorkflow = () => {
     if (!window.confirm('Are you sure you want to start over? All progress will be lost.')) {
@@ -152,6 +217,7 @@ const ClientContractView = () => {
 
     // Clear localStorage
     localStorage.removeItem('signedContractHtmls')
+    localStorage.removeItem('workflowSignatureStates')
 
     // Reset local state
     setViewStep('info')
@@ -189,6 +255,9 @@ const ClientContractView = () => {
       const finalSignatureData = signatureData || signaturePadRef.current?.toDataURL()
       const currentContractId = getCurrentContractId()
       const contractConfig = getContractConfig(currentContractId)
+
+      // Save signature state to localStorage so it persists when navigating back
+      saveSignatureState(currentContractId, finalSignatureData, agreedToTerms, typedName)
 
       const tierPrices = {
         'hosting-only': 50,
@@ -308,16 +377,9 @@ const ClientContractView = () => {
     if (!hasNextContract()) return
 
     // Navigate to next step using query param
+    // State restoration is handled by the useEffect that watches currentStep
     const nextStep = currentStep + 1
     navigate(`?step=${nextStep}`)
-
-    // Reset state for new contract
-    setAgreedToTerms(false)
-    setSelectedTier(null)
-    setHasSigned(false)
-    if (signaturePadRef.current) {
-      signaturePadRef.current.clear()
-    }
   }
 
   // Error state
@@ -682,11 +744,6 @@ const ClientContractView = () => {
                   onClick={() => {
                     if (currentStep > 0) {
                       navigate(`?step=${currentStep - 1}`)
-                      setAgreedToTerms(false)
-                      setHasSigned(false)
-                      if (signaturePadRef.current) {
-                        signaturePadRef.current.clear()
-                      }
                     }
                   }}
                   disabled={displayStep === 1}
@@ -736,11 +793,6 @@ const ClientContractView = () => {
                   onClick={() => {
                     if (displayStep < totalWorkflowSteps && isFormComplete()) {
                       navigate(`?step=${currentStep + 1}`)
-                      setAgreedToTerms(false)
-                      setHasSigned(false)
-                      if (signaturePadRef.current) {
-                        signaturePadRef.current.clear()
-                      }
                     }
                   }}
                   disabled={displayStep === totalWorkflowSteps || !isFormComplete()}
@@ -950,13 +1002,8 @@ const ClientContractView = () => {
                         onClick={() => {
                           if (currentStep > 0) {
                             // Navigate to previous contract in workflow using query param
+                            // State restoration is handled by the useEffect that watches currentStep
                             navigate(`?step=${currentStep - 1}`)
-                            // Reset state for previous contract
-                            setAgreedToTerms(false)
-                            setHasSigned(false)
-                            if (signaturePadRef.current) {
-                              signaturePadRef.current.clear()
-                            }
                           }
                         }}
                         disabled={currentStep === 0}
