@@ -841,7 +841,7 @@ const ClientContractView = () => {
         >
           <div className="w-full mx-auto">
             {/* Render contract - pointer-events-none with selective override via pointer-events-auto on interactive elements */}
-            <div ref={contractDocRef} className="pointer-events-none">
+            <div ref={contractDocRef} className="pointer-events-none flex justify-center items-center">
               {DocumentComponent && <DocumentComponent />}
             </div>
 
