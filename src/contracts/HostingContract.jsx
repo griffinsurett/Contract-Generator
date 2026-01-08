@@ -115,13 +115,6 @@ const HostingSidebarForm = ({ page = 'provider' }) => {
 const HostingDocument = () => {
   const { formData, updateField, signatureData, typedName, isClientView } = useFormContext();
 
-  // DEBUG: Log formData to see what's being passed
-  console.log('HostingDocument formData:', {
-    serviceProviderName: formData.serviceProviderName,
-    serviceProviderCompany: formData.serviceProviderCompany,
-    developerSignature: formData.developerSignature ? 'EXISTS' : 'EMPTY',
-  });
-
   // Check if maintenance is included based on tier
   const includesMaintenance = formData.selectedTier && formData.selectedTier !== 'hosting-only';
 

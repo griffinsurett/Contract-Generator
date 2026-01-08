@@ -1,47 +1,35 @@
 import { useState } from 'react'
 import { getContractConfig } from '../contracts'
 
-// Map business profile fields to contract form fields based on contract type
-const mapProfileToFormFields = (profile, contractId) => {
+// Map business profile fields to contract form fields
+// Sets ALL provider field variants so data is available across all contract types
+const mapProfileToFormFields = (profile) => {
   if (!profile) return {}
 
-  // Common field for developer signature (shared across all contracts)
-  const commonFields = {
-    developerSignature: profile.signature || ''
-  }
+  // Set all provider field variants so data works across all contracts
+  return {
+    // Common signature field
+    developerSignature: profile.signature || '',
 
-  // Different contracts use different field names for provider info
-  switch (contractId) {
-    case 'hosting':
-      return {
-        ...commonFields,
-        serviceProviderName: profile.contactName || '',
-        serviceProviderCompany: profile.companyName || '',
-        serviceProviderLocation: profile.location || ''
-      }
-    case 'web-design':
-      return {
-        ...commonFields,
-        developerName: profile.contactName || '',
-        developerCompany: profile.companyName || '',
-        developerLocation: profile.location || ''
-      }
-    case 'google-workspace':
-      return {
-        ...commonFields,
-        serviceProviderLegalName: profile.contactName || '',
-        serviceProviderEntity: profile.companyName || '',
-        serviceProviderAddress: profile.location || ''
-      }
-    case 'nda':
-      return {
-        ...commonFields,
-        disclosingPartyName: profile.contactName || '',
-        disclosingPartyCompany: profile.companyName || '',
-        disclosingPartyAddress: profile.location || ''
-      }
-    default:
-      return commonFields
+    // Hosting contract fields
+    serviceProviderName: profile.contactName || '',
+    serviceProviderCompany: profile.companyName || '',
+    serviceProviderLocation: profile.location || '',
+
+    // Web Design contract fields
+    developerName: profile.contactName || '',
+    developerCompany: profile.companyName || '',
+    developerLocation: profile.location || '',
+
+    // Google Workspace contract fields
+    serviceProviderLegalName: profile.contactName || '',
+    serviceProviderEntity: profile.companyName || '',
+    serviceProviderAddress: profile.location || '',
+
+    // NDA contract fields
+    disclosingPartyName: profile.contactName || '',
+    disclosingPartyCompany: profile.companyName || '',
+    disclosingPartyAddress: profile.location || ''
   }
 }
 
@@ -72,7 +60,7 @@ export const useContractForm = (initialContractId = 'hosting') => {
 
     if (businessProfile) {
       // Merge profile data with default fields (profile takes precedence for mapped fields)
-      const profileFields = mapProfileToFormFields(businessProfile, contractId)
+      const profileFields = mapProfileToFormFields(businessProfile)
       setFormData({
         ...defaultFields,
         ...profileFields
@@ -83,9 +71,9 @@ export const useContractForm = (initialContractId = 'hosting') => {
   }
 
   // Apply business profile to current form data
-  const applyBusinessProfile = (profile, contractId) => {
+  const applyBusinessProfile = (profile) => {
     if (!profile) return
-    const profileFields = mapProfileToFormFields(profile, contractId || currentContract)
+    const profileFields = mapProfileToFormFields(profile)
     setFormData(prev => ({
       ...prev,
       ...profileFields

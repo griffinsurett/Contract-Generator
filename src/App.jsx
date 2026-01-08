@@ -73,7 +73,7 @@ function App() {
       // Remember the selected profile for workflow navigation
       setSelectedProfileId(profileId)
       // Apply to current contract
-      contractForm.applyBusinessProfile(profile, contractForm.currentContract)
+      contractForm.applyBusinessProfile(profile)
     }
   }
 
