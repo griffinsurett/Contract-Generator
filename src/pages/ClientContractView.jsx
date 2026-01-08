@@ -30,6 +30,7 @@ const ClientContractView = () => {
   const [showSignatureModal, setShowSignatureModal] = useState(false)
   const [signatureData, setSignatureData] = useState(null)
   const [hasSigned, setHasSigned] = useState(false)
+  const [isSignaturePanelOpen, setIsSignaturePanelOpen] = useState(true)
 
   // Client info form state
   const [clientInfo, setClientInfo] = useState({
@@ -831,8 +832,21 @@ const ClientContractView = () => {
           <div className="w-full mx-auto p-6">
             {/* Signature section */}
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900">Sign the Agreement</h2>
+              <button
+                onClick={() => setIsSignaturePanelOpen(!isSignaturePanelOpen)}
+                className="w-full flex items-center justify-between mb-4 cursor-pointer group"
+              >
+                <div className="flex items-center gap-3 w-full justify-between">
+                  <h2 className="text-xl font-bold text-gray-900">Sign the Agreement</h2>
+                  <svg
+                    className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${isSignaturePanelOpen ? 'rotate-0' : 'rotate-180'}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
                 {needsTierFirst && selectedTier && (
                   <span className="text-sm text-blue-600">
                     Plan: <strong>
@@ -842,169 +856,174 @@ const ClientContractView = () => {
                     </strong>
                   </span>
                 )}
-              </div>
+              </button>
 
-              {needsTierFirst && !selectedTier && (
-                <div className="rounded-lg p-3 mb-4 bg-amber-50 border border-amber-200">
-                  <p className="text-sm text-amber-800">
-                    Please select a hosting plan above before signing.
-                  </p>
-                </div>
-              )}
-
-              {hasNextContract() && (
-                  <div className="bg-amber-50 rounded-lg p-3 mb-4">
-                    <p className="text-sm text-amber-800">
-                      After signing, you'll continue to the next contract ({displayStep} of {totalWorkflowSteps}).
-                    </p>
-                  </div>
-                )}
-
-                {/* Agreement checkbox - must be checked before signing */}
-                <label className="flex items-start gap-3 mb-4 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={agreedToTerms}
-                    onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="mt-1 w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">
-                    I have read and agree to the terms and conditions outlined in this contract.
-                    I understand that this constitutes a legally binding agreement.
-                  </span>
-                </label>
-
-                <div className="grid grid-cols-3 gap-6">
-                  {/* Typed name */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Type your full legal name
-                    </label>
-                    <input
-                      type="text"
-                      value={typedName}
-                      onChange={(e) => setTypedName(e.target.value)}
-                      placeholder="John Smith"
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                    />
-                  </div>
-
-                  {/* Date */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date
-                    </label>
-                    <div className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-lg bg-gray-50 text-gray-700">
-                      {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              {/* Collapsible content */}
+              {isSignaturePanelOpen && (
+                <>
+                  {needsTierFirst && !selectedTier && (
+                    <div className="rounded-lg p-3 mb-4 bg-amber-50 border border-amber-200">
+                      <p className="text-sm text-amber-800">
+                        Please select a hosting plan above before signing.
+                      </p>
                     </div>
-                  </div>
-
-                  {/* Signature pad */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Draw your signature {!agreedToTerms && <span className="text-gray-400">(check terms first)</span>}
-                      </label>
-                      <button
-                        onClick={clearSignature}
-                        disabled={!agreedToTerms}
-                        className={`text-xs ${agreedToTerms ? 'text-gray-500 hover:text-gray-700' : 'text-gray-300 cursor-not-allowed'}`}
-                      >
-                        Clear
-                      </button>
-                    </div>
-                    <canvas
-                      ref={signatureCanvasRef}
-                      className={`w-full h-[80px] border-2 rounded-lg ${
-                        agreedToTerms
-                          ? 'border-gray-300 bg-white cursor-crosshair'
-                          : 'border-gray-200 bg-gray-100 cursor-not-allowed opacity-50'
-                      }`}
-                      style={{ touchAction: 'none', pointerEvents: agreedToTerms ? 'auto' : 'none' }}
-                    />
-                  </div>
-                </div>
-
-                {/* Submit/Navigation buttons */}
-                <div className="flex items-center gap-4 mt-4">
-                  {/* Back button for workflows (disabled on first contract) */}
-                  {totalWorkflowSteps > 1 && (
-                    <button
-                      onClick={() => {
-                        if (currentStep > 0) {
-                          // Navigate to previous contract in workflow using query param
-                          navigate(`?step=${currentStep - 1}`)
-                          // Reset state for previous contract
-                          setAgreedToTerms(false)
-                          setHasSigned(false)
-                          if (signaturePadRef.current) {
-                            signaturePadRef.current.clear()
-                          }
-                        }
-                      }}
-                      disabled={currentStep === 0}
-                      className={`px-6 py-4 rounded-lg font-semibold transition-all flex items-center gap-2 ${
-                        currentStep === 0
-                          ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                      title={currentStep === 0 ? 'This is the first contract' : 'Go back to previous contract'}
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                      Back
-                    </button>
                   )}
 
-                  {/* Main submit button */}
-                  <button
-                    onClick={handleSubmit}
-                    disabled={!isFormComplete() || isSubmitting}
-                    className={`flex-1 py-4 rounded-lg font-semibold text-lg transition-all flex items-center justify-center gap-2 ${
-                      isFormComplete() && !isSubmitting
-                        ? hasNextContract()
-                          ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-lg'
-                          : 'bg-green-600 text-white hover:bg-green-700 shadow-lg'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    }`}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        Processing...
-                      </>
-                    ) : hasNextContract() ? (
-                      <>
-                        Sign & Continue
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        Accept & Sign Contract
-                      </>
-                    )}
-                  </button>
-                </div>
+                  {hasNextContract() && (
+                    <div className="bg-amber-50 rounded-lg p-3 mb-4">
+                      <p className="text-sm text-amber-800">
+                        After signing, you'll continue to the next contract ({displayStep} of {totalWorkflowSteps}).
+                      </p>
+                    </div>
+                  )}
 
-                {/* Workflow step indicator at bottom */}
-                {totalWorkflowSteps > 1 && (
-                  <div className="mt-3 text-center text-sm text-gray-500">
-                    Step {displayStep} of {totalWorkflowSteps} • {hasNextContract()
-                      ? `Next: ${getContractConfig(getWorkflowContracts()[getCurrentWorkflowIndex() + 1])?.name || 'Next Contract'}`
-                      : 'Final contract'
-                    }
+                  {/* Agreement checkbox - must be checked before signing */}
+                  <label className="flex items-start gap-3 mb-4 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={agreedToTerms}
+                      onChange={(e) => setAgreedToTerms(e.target.checked)}
+                      className="mt-1 w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">
+                      I have read and agree to the terms and conditions outlined in this contract.
+                      I understand that this constitutes a legally binding agreement.
+                    </span>
+                  </label>
+
+                  <div className="grid grid-cols-3 gap-6">
+                    {/* Typed name */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Type your full legal name
+                      </label>
+                      <input
+                        type="text"
+                        value={typedName}
+                        onChange={(e) => setTypedName(e.target.value)}
+                        placeholder="John Smith"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      />
+                    </div>
+
+                    {/* Date */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Date
+                      </label>
+                      <div className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-lg bg-gray-50 text-gray-700">
+                        {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      </div>
+                    </div>
+
+                    {/* Signature pad */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Draw your signature {!agreedToTerms && <span className="text-gray-400">(check terms first)</span>}
+                        </label>
+                        <button
+                          onClick={clearSignature}
+                          disabled={!agreedToTerms}
+                          className={`text-xs ${agreedToTerms ? 'text-gray-500 hover:text-gray-700' : 'text-gray-300 cursor-not-allowed'}`}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                      <canvas
+                        ref={signatureCanvasRef}
+                        className={`w-full h-[80px] border-2 rounded-lg ${
+                          agreedToTerms
+                            ? 'border-gray-300 bg-white cursor-crosshair'
+                            : 'border-gray-200 bg-gray-100 cursor-not-allowed opacity-50'
+                        }`}
+                        style={{ touchAction: 'none', pointerEvents: agreedToTerms ? 'auto' : 'none' }}
+                      />
+                    </div>
                   </div>
-                )}
-              </div>
+
+                  {/* Submit/Navigation buttons */}
+                  <div className="flex items-center gap-4 mt-4">
+                    {/* Back button for workflows (disabled on first contract) */}
+                    {totalWorkflowSteps > 1 && (
+                      <button
+                        onClick={() => {
+                          if (currentStep > 0) {
+                            // Navigate to previous contract in workflow using query param
+                            navigate(`?step=${currentStep - 1}`)
+                            // Reset state for previous contract
+                            setAgreedToTerms(false)
+                            setHasSigned(false)
+                            if (signaturePadRef.current) {
+                              signaturePadRef.current.clear()
+                            }
+                          }
+                        }}
+                        disabled={currentStep === 0}
+                        className={`px-6 py-4 rounded-lg font-semibold transition-all flex items-center gap-2 ${
+                          currentStep === 0
+                            ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                        title={currentStep === 0 ? 'This is the first contract' : 'Go back to previous contract'}
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Back
+                      </button>
+                    )}
+
+                    {/* Main submit button */}
+                    <button
+                      onClick={handleSubmit}
+                      disabled={!isFormComplete() || isSubmitting}
+                      className={`flex-1 py-4 rounded-lg font-semibold text-lg transition-all flex items-center justify-center gap-2 ${
+                        isFormComplete() && !isSubmitting
+                          ? hasNextContract()
+                            ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-lg'
+                            : 'bg-green-600 text-white hover:bg-green-700 shadow-lg'
+                          : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      }`}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Processing...
+                        </>
+                      ) : hasNextContract() ? (
+                        <>
+                          Sign & Continue
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Accept & Sign Contract
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Workflow step indicator at bottom */}
+                  {totalWorkflowSteps > 1 && (
+                    <div className="mt-3 text-center text-sm text-gray-500">
+                      Step {displayStep} of {totalWorkflowSteps} • {hasNextContract()
+                        ? `Next: ${getContractConfig(getWorkflowContracts()[getCurrentWorkflowIndex() + 1])?.name || 'Next Contract'}`
+                        : 'Final contract'
+                      }
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       {/* )} */}
