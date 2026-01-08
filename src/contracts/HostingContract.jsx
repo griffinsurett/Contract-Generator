@@ -2,6 +2,7 @@ import React from "react";
 import { useFormContext } from "../contexts/FormContext";
 import { generateDocument } from "../utils/documentGenerator";
 import { getTodayDate, formatDateToFields } from "../utils/dateUtils";
+import SignatureBlock from "../components/SignatureBlock";
 const currentDate = formatDateToFields(getTodayDate());
 
 const HostingSidebarForm = ({ page = 'provider' }) => {
@@ -1371,65 +1372,30 @@ const HostingDocument = () => {
         <div className="contract-signature-section">
           <h3 className="contract-h3">SIGNATURES</h3>
 
-          <div className="contract-signature-block">
-            <p className="contract-p-bold mb-4">FOR THE SERVICE PROVIDER</p>
-            <p className="contract-p">{formData.serviceProviderCompany}</p>
-            {formData.developerSignature ? (
-              <div className="mt-6">
-                <p className="contract-p mb-2">Signature:</p>
-                <div className="border-b-2 border-gray-400 pb-2 inline-block">
-                  <img
-                    src={formData.developerSignature}
-                    alt="Service provider signature"
-                    className="h-16 max-w-[200px] object-contain"
-                  />
-                </div>
-              </div>
-            ) : (
-              <p className="contract-p mt-6">
-                Signature: _________________________
-              </p>
-            )}
-            <p className="contract-p mt-4">
-              Name: {formData.serviceProviderName}
-            </p>
-            <p className="contract-p mt-4">
-              Date:{" "}
-              {formData.day && formData.month && formData.year
+          <SignatureBlock
+            title="FOR THE SERVICE PROVIDER"
+            companyName={formData.serviceProviderCompany}
+            personName={formData.serviceProviderName}
+            signatureData={formData.developerSignature}
+            signatureAlt="Service provider signature"
+            date={formData.day && formData.month && formData.year
+              ? `${formData.month} ${formData.day}, ${formData.year}`
+              : ""}
+            className="contract-signature-block"
+          />
+
+          <SignatureBlock
+            title="FOR THE CLIENT"
+            companyName={formData.clientCompanyName}
+            personName={typedName || formData.clientFirstName}
+            signatureData={signatureData}
+            signatureAlt="Client signature"
+            date={isClientView
+              ? new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+              : formData.day && formData.month && formData.year
                 ? `${formData.month} ${formData.day}, ${formData.year}`
                 : ""}
-            </p>
-          </div>
-
-          <div>
-            <p className="contract-p-bold mb-4">FOR THE CLIENT</p>
-            <p className="contract-p">{formData.clientCompanyName}</p>
-            {signatureData ? (
-              <div className="mt-6">
-                <p className="contract-p mb-2">Signature:</p>
-                <div className="border-b-2 border-gray-400 pb-2 inline-block">
-                  <img
-                    src={signatureData}
-                    alt="Client signature"
-                    className="h-16 max-w-[200px] object-contain"
-                  />
-                </div>
-              </div>
-            ) : (
-              <p className="contract-p mt-6">
-                Signature: _________________________
-              </p>
-            )}
-            <p className="contract-p mt-4">Name: {typedName || formData.clientFirstName}</p>
-            <p className="contract-p mt-4">
-              Date:{" "}
-              {isClientView
-                ? new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-                : formData.day && formData.month && formData.year
-                  ? `${formData.month} ${formData.day}, ${formData.year}`
-                  : ""}
-            </p>
-          </div>
+          />
         </div>
       </div>
 

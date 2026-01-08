@@ -1,5 +1,6 @@
 import React from 'react'
 import { generateDocument } from '../utils/documentGenerator'
+import SignatureBlock from './SignatureBlock'
 
 const ContractDocument = ({ formData, updateField }) => {
   const {
@@ -982,21 +983,22 @@ const ContractDocument = ({ formData, updateField }) => {
         <div style={{ marginTop: '48px', paddingTop: '24px', borderTop: '1px solid #000' }}>
           <h3 style={h3Style}>SIGNATURES</h3>
           
-          <div style={{ marginBottom: '40px' }}>
-            <p style={{ fontWeight: 'bold', marginBottom: '16px' }}>FOR THE SERVICE PROVIDER</p>
-            <p>{serviceProviderCompany}</p>
-            <p style={{ marginTop: '24px' }}>Signature: _________________________</p>
-            <p style={{ marginTop: '16px' }}>Name: {serviceProviderName}</p>
-            <p style={{ marginTop: '16px' }}>Date: {day && month && year ? `${month} ${day}, ${year}` : ''}</p>
-          </div>
+          <SignatureBlock
+            title="FOR THE SERVICE PROVIDER"
+            companyName={serviceProviderCompany}
+            personName={serviceProviderName}
+            date={day && month && year ? `${month} ${day}, ${year}` : ''}
+            useInlineStyles
+            style={{ marginBottom: '40px' }}
+          />
 
-          <div>
-            <p style={{ fontWeight: 'bold', marginBottom: '16px' }}>FOR THE CLIENT</p>
-            <p>{clientCompanyName}</p>
-            <p style={{ marginTop: '24px' }}>Signature: _________________________</p>
-            <p style={{ marginTop: '16px' }}>Name: {clientFirstName}</p>
-            <p style={{ marginTop: '16px' }}>Date: {day && month && year ? `${month} ${day}, ${year}` : ''}</p>
-          </div>
+          <SignatureBlock
+            title="FOR THE CLIENT"
+            companyName={clientCompanyName}
+            personName={clientFirstName}
+            date={day && month && year ? `${month} ${day}, ${year}` : ''}
+            useInlineStyles
+          />
         </div>
       </div>
 
