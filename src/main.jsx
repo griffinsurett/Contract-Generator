@@ -4,12 +4,19 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
 import ClientContractView from './pages/ClientContractView.jsx'
+import AdminAuth from './components/AdminAuth.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<App />} />
+        {/* Admin route - password protected */}
+        <Route path="/" element={
+          <AdminAuth>
+            <App />
+          </AdminAuth>
+        } />
+        {/* Client signing route - no authentication required */}
         <Route path="/sign/:encodedData" element={<ClientContractView />} />
       </Routes>
     </BrowserRouter>

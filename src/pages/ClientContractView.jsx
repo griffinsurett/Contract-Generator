@@ -1,14 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import SignaturePad from 'signature_pad'
-import { decodeContractData, generateNextWorkflowLink } from '../utils/contractUrl'
+import { decodeContractData } from '../utils/contractUrl'
 import { getContractConfig } from '../contracts'
 import { FormProvider } from '../contexts/FormContext'
-import { generateContractPDF } from '../utils/pdfGenerator'
+import { generateContractPDF } from '../utils/pdfGenerator.jsx'
 
 const ClientContractView = () => {
   const { encodedData } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
+  // Get current step from URL query params (defaults to 0)
+  const currentStep = parseInt(searchParams.get('step') || '0', 10)
 
   // Decode contract data from URL
   const [contractData, setContractData] = useState(null)
@@ -23,7 +27,6 @@ const ClientContractView = () => {
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [showTierModal, setShowTierModal] = useState(false)
   const [modalTier, setModalTier] = useState(null)
-  const [signedPdfUrl, setSignedPdfUrl] = useState(null)
   const [showSignatureModal, setShowSignatureModal] = useState(false)
   const [signatureData, setSignatureData] = useState(null)
   const [hasSigned, setHasSigned] = useState(false)
@@ -46,7 +49,8 @@ const ClientContractView = () => {
   // Check if this is a dynamic workflow from URL
   const isWorkflow = () => contractData?.isWorkflow === true
   const getWorkflowContracts = () => contractData?.workflow || []
-  const getCurrentWorkflowIndex = () => contractData?.currentIndex || 0
+  // Use step from URL params instead of encoded data
+  const getCurrentWorkflowIndex = () => currentStep
 
   // Get current contract ID (either from workflow or single contract)
   const getCurrentContractId = () => {
@@ -94,6 +98,16 @@ const ClientContractView = () => {
         if (decoded.formData?.selectedTier) {
           setSelectedTier(decoded.formData.selectedTier)
         }
+
+        // Clear localStorage only when starting fresh (first contract with no existing workflow data)
+        const isFirstContract = !decoded.isWorkflow || decoded.currentIndex === 0
+        if (isFirstContract) {
+          // Only clear if there's no workflowData (meaning truly fresh start, not a refresh mid-workflow)
+          const hasWorkflowContext = decoded.options?.workflowData?.previousContracts?.length > 0
+          if (!hasWorkflowContext) {
+            localStorage.removeItem('signedContractHtmls')
+          }
+        }
       } else {
         setError('Invalid or expired contract link')
       }
@@ -129,6 +143,35 @@ const ClientContractView = () => {
     }
   }
 
+  // Reset workflow - navigates back to the first contract with fresh state
+  const handleResetWorkflow = () => {
+    if (!window.confirm('Are you sure you want to start over? All progress will be lost.')) {
+      return
+    }
+
+    // Clear localStorage
+    localStorage.removeItem('signedContractHtmls')
+
+    // Reset local state
+    setViewStep('info')
+    setTypedName('')
+    setAgreedToTerms(false)
+    setSelectedTier(null)
+    setHasSigned(false)
+    setSignatureData(null)
+    setClientInfo({
+      fullName: '',
+      email: '',
+      phone: '',
+      companyName: '',
+      address: ''
+    })
+
+    // Navigate to step 0 (first contract)
+    // The base URL already has the workflow/contract data encoded
+    navigate('?step=0')
+  }
+
   // Check if form is complete - requires terms checked and signature
   const isFormComplete = () => {
     return agreedToTerms && (hasSigned || signatureData)
@@ -152,24 +195,32 @@ const ClientContractView = () => {
         'hosting-priority': 100
       }
 
-      // Generate PDF of the signed contract
-      let pdfDataUrl = null
-      try {
-        if (contractDocRef.current) {
-          const pdfResult = await generateContractPDF(contractDocRef.current, {
-            filename: `${contractConfig?.name || 'Contract'}_${typedName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
-            clientName: typedName,
-            contractType: contractConfig?.name || 'Contract',
-            signatureData: finalSignatureData,
-            selectedTier: selectedTier,
-            clientInfo: clientInfo
-          })
-          pdfDataUrl = pdfResult.dataUrl
+      // Save contract HTML for PDF generation later (without export controls)
+      if (contractDocRef.current) {
+        const clone = contractDocRef.current.cloneNode(true)
+        // Remove download/export sections
+        clone.querySelectorAll('[data-export-control="true"]').forEach(el => el.remove())
+        // Replace inputs with their values
+        clone.querySelectorAll('input, select, textarea').forEach(input => {
+          const span = document.createElement('span')
+          span.textContent = input.value || input.placeholder || '___________'
+          span.style.fontWeight = 'bold'
+          input.parentNode.replaceChild(span, input)
+        })
 
+        // Save to localStorage so it persists across workflow navigation and refreshes
+        const existingContracts = JSON.parse(localStorage.getItem('signedContractHtmls') || '[]')
+        // Avoid duplicates if user somehow re-submits
+        const alreadySaved = existingContracts.some(c => c.contractId === currentContractId)
+        if (!alreadySaved) {
+          existingContracts.push({
+            contractId: currentContractId,
+            contractName: contractConfig?.name || currentContractId,
+            html: clone.innerHTML,
+            signedAt: new Date().toISOString()
+          })
+          localStorage.setItem('signedContractHtmls', JSON.stringify(existingContracts))
         }
-      } catch (pdfError) {
-        console.error('PDF generation error:', pdfError)
-        // Continue without PDF if generation fails
       }
 
       const acceptanceRecord = {
@@ -180,7 +231,6 @@ const ClientContractView = () => {
         selectedHostingTier: currentContractId === 'web-design' ? selectedTier : null,
         tierPrice: tierPrices[selectedTier] || null,
         signature: finalSignatureData,
-        pdfDataUrl: pdfDataUrl,
         acceptedAt: new Date().toISOString(),
         contractData: contractData.formData,
         workflowStep: getCurrentWorkflowIndex() + 1,
@@ -191,8 +241,7 @@ const ClientContractView = () => {
       try {
         const recordToStore = {
           ...acceptanceRecord,
-          signature: null, // Don't store signature data - too large
-          pdfDataUrl: null // Don't store PDF data - too large
+          signature: null // Don't store signature data - too large
         }
         const existingRecords = JSON.parse(localStorage.getItem('contractAcceptances') || '[]')
         existingRecords.push(recordToStore)
@@ -238,11 +287,6 @@ const ClientContractView = () => {
         })
       }
 
-      // Save the PDF URL for the success screen
-      if (pdfDataUrl) {
-        setSignedPdfUrl(pdfDataUrl)
-      }
-
       // Check if there's a next contract in the workflow
       if (hasNextContract()) {
         // Navigate to next contract
@@ -262,36 +306,16 @@ const ClientContractView = () => {
   const handleProceedToNextContract = () => {
     if (!hasNextContract()) return
 
-    // Generate next workflow link with preserved data
-    const nextLink = generateNextWorkflowLink(
-      getWorkflowContracts(),
-      getCurrentWorkflowIndex(),
-      contractData.formData,
-      {
-        ...contractData.options,
-        workflowData: {
-          typedName: typedName,
-          selectedTier: selectedTier,
-          previousContracts: [
-            ...(contractData.options?.workflowData?.previousContracts || []),
-            getCurrentContractId()
-          ]
-        }
-      }
-    )
+    // Navigate to next step using query param
+    const nextStep = currentStep + 1
+    navigate(`?step=${nextStep}`)
 
-    if (nextLink) {
-      // Extract the encoded part from the full URL
-      const encoded = nextLink.split('/sign/')[1]
-      navigate(`/sign/${encoded}`)
-
-      // Reset state for new contract
-      setAgreedToTerms(false)
-      setSelectedTier(null)
-      setHasSigned(false)
-      if (signaturePadRef.current) {
-        signaturePadRef.current.clear()
-      }
+    // Reset state for new contract
+    setAgreedToTerms(false)
+    setSelectedTier(null)
+    setHasSigned(false)
+    if (signaturePadRef.current) {
+      signaturePadRef.current.clear()
     }
   }
 
@@ -320,6 +344,24 @@ const ClientContractView = () => {
   // Final success state
   if (isSubmitted) {
     const totalContracts = isWorkflow() ? getWorkflowContracts().length : 1
+    // Load all signed contracts from localStorage
+    const savedContracts = JSON.parse(localStorage.getItem('signedContractHtmls') || '[]')
+
+    const handleDownloadContract = (contract) => {
+      generateContractPDF({ innerHTML: contract.html }, {
+        filename: `${contract.contractName.replace(/\s+/g, '_')}_${typedName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+      })
+    }
+
+    const handleDownloadAll = () => {
+      // Download each contract with a small delay between them
+      savedContracts.forEach((contract, index) => {
+        setTimeout(() => {
+          handleDownloadContract(contract)
+        }, index * 1000) // 1 second delay between each
+      })
+    }
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl p-10 max-w-lg text-center">
@@ -345,23 +387,56 @@ const ClientContractView = () => {
             </div>
           )}
 
-          {/* Download signed contract PDF */}
-          {signedPdfUrl && (
-            <a
-              href={signedPdfUrl}
-              download={`Signed_Contract_${new Date().toISOString().split('T')[0]}.pdf`}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors mb-6"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Download Signed Contract (PDF)
-            </a>
+          {/* Download PDF buttons */}
+          {savedContracts.length > 0 && (
+            <div className="mb-6">
+              {savedContracts.length > 1 && (
+                <button
+                  onClick={handleDownloadAll}
+                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors mb-3"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download All Contracts ({savedContracts.length})
+                </button>
+              )}
+
+              <div className="space-y-2">
+                {savedContracts.map((contract, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleDownloadContract(contract)}
+                    className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                      savedContracts.length > 1
+                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm'
+                        : 'bg-blue-600 text-white hover:bg-blue-700 px-6 py-3 font-semibold'
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    {savedContracts.length > 1 ? contract.contractName : 'Download Signed Contract (PDF)'}
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-xs text-gray-500 mt-3">
+                Tip: In the print dialog, uncheck "Headers and footers" for a cleaner PDF.
+              </p>
+            </div>
           )}
 
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 mb-6">
             A confirmation has been sent. You will be contacted shortly with next steps.
           </p>
+
+          <button
+            onClick={handleResetWorkflow}
+            className="text-sm text-gray-400 hover:text-gray-600 underline transition-colors"
+          >
+            Start Over
+          </button>
         </div>
       </div>
     )
@@ -526,11 +601,11 @@ const ClientContractView = () => {
   // Determine step labels based on contract type
   const needsTierFirst = showTierSelection()
   const totalWorkflowSteps = isWorkflow() ? getWorkflowContracts().length : 1
-  const currentStep = getCurrentWorkflowIndex() + 1
+  const displayStep = getCurrentWorkflowIndex() + 1 // 1-indexed for display
 
   // Calculate workflow progress percentage
   const workflowProgressPercent = totalWorkflowSteps > 1
-    ? Math.round((currentStep / totalWorkflowSteps) * 100)
+    ? Math.round((displayStep / totalWorkflowSteps) * 100)
     : 100
 
   return (
@@ -539,10 +614,17 @@ const ClientContractView = () => {
       <div className="sticky top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="w-full mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex items-center gap-4">
               <h1 className="text-lg font-semibold text-gray-900">
                 {contractConfig?.name || 'Contract Review'}
               </h1>
+              <button
+                onClick={handleResetWorkflow}
+                className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                title="Start over from the beginning"
+              >
+                Reset
+              </button>
             </div>
             <div className="flex items-center gap-4">
               <StepIndicator
@@ -582,7 +664,7 @@ const ClientContractView = () => {
             <div className="mt-3 pt-3 border-t border-gray-100">
               <div className="flex items-center justify-between text-gray-600 mb-2">
                 <span className="text-sm font-medium">
-                  Contract {currentStep} of {totalWorkflowSteps}
+                  Contract {displayStep} of {totalWorkflowSteps}
                 </span>
                 <span className="text-sm font-bold text-purple-600">{workflowProgressPercent}%</span>
               </div>
@@ -597,38 +679,22 @@ const ClientContractView = () => {
                 {/* Left arrow - navigate to previous contract */}
                 <button
                   onClick={() => {
-                    if (currentStep > 1) {
-                      const prevIndex = getCurrentWorkflowIndex() - 1
-                      const prevLink = generateNextWorkflowLink(
-                        getWorkflowContracts(),
-                        prevIndex - 1,
-                        contractData.formData,
-                        {
-                          ...contractData.options,
-                          workflowData: {
-                            typedName: typedName,
-                            selectedTier: selectedTier
-                          }
-                        }
-                      )
-                      if (prevLink) {
-                        const encoded = prevLink.split('/sign/')[1]
-                        navigate(`/sign/${encoded}`)
-                        setAgreedToTerms(false)
-                        setHasSigned(false)
-                        if (signaturePadRef.current) {
-                          signaturePadRef.current.clear()
-                        }
+                    if (currentStep > 0) {
+                      navigate(`?step=${currentStep - 1}`)
+                      setAgreedToTerms(false)
+                      setHasSigned(false)
+                      if (signaturePadRef.current) {
+                        signaturePadRef.current.clear()
                       }
                     }
                   }}
-                  disabled={currentStep === 1}
+                  disabled={displayStep === 1}
                   className={`p-1 rounded transition-all ${
-                    currentStep === 1
+                    displayStep === 1
                       ? 'opacity-30 cursor-not-allowed'
                       : 'opacity-100 hover:bg-purple-100 cursor-pointer'
                   }`}
-                  title={currentStep === 1 ? 'This is the first contract' : 'Go to previous contract'}
+                  title={displayStep === 1 ? 'This is the first contract' : 'Go to previous contract'}
                 >
                   <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -667,38 +733,23 @@ const ClientContractView = () => {
                 {/* Right arrow - navigate to next contract (only if current is signed) */}
                 <button
                   onClick={() => {
-                    if (currentStep < totalWorkflowSteps && isFormComplete()) {
-                      const nextLink = generateNextWorkflowLink(
-                        getWorkflowContracts(),
-                        getCurrentWorkflowIndex(),
-                        contractData.formData,
-                        {
-                          ...contractData.options,
-                          workflowData: {
-                            typedName: typedName,
-                            selectedTier: selectedTier
-                          }
-                        }
-                      )
-                      if (nextLink) {
-                        const encoded = nextLink.split('/sign/')[1]
-                        navigate(`/sign/${encoded}`)
-                        setAgreedToTerms(false)
-                        setHasSigned(false)
-                        if (signaturePadRef.current) {
-                          signaturePadRef.current.clear()
-                        }
+                    if (displayStep < totalWorkflowSteps && isFormComplete()) {
+                      navigate(`?step=${currentStep + 1}`)
+                      setAgreedToTerms(false)
+                      setHasSigned(false)
+                      if (signaturePadRef.current) {
+                        signaturePadRef.current.clear()
                       }
                     }
                   }}
-                  disabled={currentStep === totalWorkflowSteps || !isFormComplete()}
+                  disabled={displayStep === totalWorkflowSteps || !isFormComplete()}
                   className={`p-1 rounded transition-all ${
-                    currentStep === totalWorkflowSteps || !isFormComplete()
+                    displayStep === totalWorkflowSteps || !isFormComplete()
                       ? 'opacity-30 cursor-not-allowed'
                       : 'opacity-100 hover:bg-purple-100 cursor-pointer'
                   }`}
                   title={
-                    currentStep === totalWorkflowSteps
+                    displayStep === totalWorkflowSteps
                       ? 'This is the last contract'
                       : !isFormComplete()
                         ? 'Sign this contract first to continue'
@@ -804,7 +855,7 @@ const ClientContractView = () => {
               {hasNextContract() && (
                   <div className="bg-amber-50 rounded-lg p-3 mb-4">
                     <p className="text-sm text-amber-800">
-                      After signing, you'll continue to the next contract ({currentStep} of {totalWorkflowSteps}).
+                      After signing, you'll continue to the next contract ({displayStep} of {totalWorkflowSteps}).
                     </p>
                   </div>
                 )}
@@ -880,40 +931,24 @@ const ClientContractView = () => {
                   {totalWorkflowSteps > 1 && (
                     <button
                       onClick={() => {
-                        if (currentStep > 1) {
-                          // Navigate to previous contract in workflow
-                          const prevIndex = getCurrentWorkflowIndex() - 1
-                          const prevLink = generateNextWorkflowLink(
-                            getWorkflowContracts(),
-                            prevIndex - 1, // generateNextWorkflowLink adds 1, so we subtract 1
-                            contractData.formData,
-                            {
-                              ...contractData.options,
-                              workflowData: {
-                                typedName: typedName,
-                                selectedTier: selectedTier
-                              }
-                            }
-                          )
-                          if (prevLink) {
-                            const encoded = prevLink.split('/sign/')[1]
-                            navigate(`/sign/${encoded}`)
-                            // Reset state for previous contract
-                            setAgreedToTerms(false)
-                            setHasSigned(false)
-                            if (signaturePadRef.current) {
-                              signaturePadRef.current.clear()
-                            }
+                        if (currentStep > 0) {
+                          // Navigate to previous contract in workflow using query param
+                          navigate(`?step=${currentStep - 1}`)
+                          // Reset state for previous contract
+                          setAgreedToTerms(false)
+                          setHasSigned(false)
+                          if (signaturePadRef.current) {
+                            signaturePadRef.current.clear()
                           }
                         }
                       }}
-                      disabled={currentStep === 1}
+                      disabled={currentStep === 0}
                       className={`px-6 py-4 rounded-lg font-semibold transition-all flex items-center gap-2 ${
-                        currentStep === 1
+                        currentStep === 0
                           ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
                           : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       }`}
-                      title={currentStep === 1 ? 'This is the first contract' : 'Go back to previous contract'}
+                      title={currentStep === 0 ? 'This is the first contract' : 'Go back to previous contract'}
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -963,7 +998,7 @@ const ClientContractView = () => {
                 {/* Workflow step indicator at bottom */}
                 {totalWorkflowSteps > 1 && (
                   <div className="mt-3 text-center text-sm text-gray-500">
-                    Step {currentStep} of {totalWorkflowSteps} • {hasNextContract()
+                    Step {displayStep} of {totalWorkflowSteps} • {hasNextContract()
                       ? `Next: ${getContractConfig(getWorkflowContracts()[getCurrentWorkflowIndex() + 1])?.name || 'Next Contract'}`
                       : 'Final contract'
                     }

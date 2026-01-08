@@ -53,12 +53,12 @@ export const generateContractLink = (contractId, formData, options = {}) => {
 
 /**
  * Generate a shareable link for a workflow (multiple contracts in sequence)
+ * Step is now managed via URL query params (?step=0, ?step=1, etc.)
  */
 export const generateWorkflowLink = (contractIds, formData, options = {}) => {
   const payload = {
     isWorkflow: true,
     workflow: contractIds,
-    currentIndex: 0,
     formData: filterFormData(formData),
     options,
     createdAt: new Date().toISOString()
@@ -67,29 +67,6 @@ export const generateWorkflowLink = (contractIds, formData, options = {}) => {
   const jsonString = JSON.stringify(payload)
   const encoded = btoa(encodeURIComponent(jsonString))
   const baseUrl = window.location.origin
-  return `${baseUrl}/sign/${encoded}`
-}
-
-/**
- * Generate a link for the next contract in a workflow
- */
-export const generateNextWorkflowLink = (workflow, currentIndex, formData, options = {}) => {
-  const nextIndex = currentIndex + 1
-  if (nextIndex >= workflow.length) {
-    return null // No more contracts in workflow
-  }
-
-  const payload = {
-    isWorkflow: true,
-    workflow,
-    currentIndex: nextIndex,
-    formData: filterFormData(formData),
-    options,
-    createdAt: new Date().toISOString()
-  }
-
-  const jsonString = JSON.stringify(payload)
-  const encoded = btoa(encodeURIComponent(jsonString))
-  const baseUrl = window.location.origin
-  return `${baseUrl}/sign/${encoded}`
+  // Include ?step=0 so the step is visible in the URL from the start
+  return `${baseUrl}/sign/${encoded}?step=0`
 }
