@@ -13,9 +13,6 @@ function App() {
   const [showLinkModal, setShowLinkModal] = useState(false)
   const [generatedLink, setGeneratedLink] = useState('')
   const [copySuccess, setCopySuccess] = useState(false)
-  const [formspreeEndpoint, setFormspreeEndpoint] = useState(
-    () => localStorage.getItem('formspreeEndpoint') || import.meta.env.VITE_FORMSPREE_ENDPOINT || ''
-  )
   // Workflow state
   const [workflowInfo, setWorkflowInfo] = useState(null) // { isWorkflow: true, workflow: ['contract-1', 'contract-2'] }
   const [currentWorkflowIndex, setCurrentWorkflowIndex] = useState(0)
@@ -37,11 +34,6 @@ function App() {
 
   const contractForm = useContractForm()
   const contractList = getContractList()
-
-  const handleFormspreeChange = (value) => {
-    setFormspreeEndpoint(value)
-    localStorage.setItem('formspreeEndpoint', value)
-  }
 
   // Save profiles to localStorage
   const saveProfiles = (profiles) => {
@@ -128,13 +120,13 @@ function App() {
       link = generateWorkflowLink(
         workflowInfo.workflow,
         contractForm.formData,
-        { formspreeEndpoint }
+        {}
       )
     } else {
       link = generateContractLink(
         contractForm.currentContract,
         contractForm.formData,
-        { formspreeEndpoint }
+        {}
       )
     }
     setGeneratedLink(link)
@@ -336,41 +328,6 @@ function App() {
                   </div>
                 </div>
               )}
-
-              {/* Formspree Configuration */}
-              <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <label className="block text-sm font-medium text-blue-900 mb-2">
-                  Formspree Endpoint (for email notifications)
-                </label>
-                <input
-                  type="text"
-                  value={formspreeEndpoint}
-                  onChange={(e) => {
-                    handleFormspreeChange(e.target.value)
-                    // Regenerate link with new endpoint
-                    let link
-                    if (isWorkflow) {
-                      link = generateWorkflowLink(
-                        workflowInfo.workflow,
-                        contractForm.formData,
-                        { formspreeEndpoint: e.target.value }
-                      )
-                    } else {
-                      link = generateContractLink(
-                        contractForm.currentContract,
-                        contractForm.formData,
-                        { formspreeEndpoint: e.target.value }
-                      )
-                    }
-                    setGeneratedLink(link)
-                  }}
-                  placeholder="https://formspree.io/f/your-form-id"
-                  className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-blue-600 mt-2">
-                  Get your endpoint at <a href="https://formspree.io" target="_blank" rel="noopener noreferrer" className="underline">formspree.io</a> (free tier available)
-                </p>
-              </div>
 
               <p className="text-gray-600 mb-4">
                 Share this link with your client. They will be able to:

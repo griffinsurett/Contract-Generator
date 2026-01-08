@@ -255,8 +255,8 @@ const ClientContractView = () => {
         // Non-critical - continue without saving
       }
 
-      // Send email notification via Formspree with PDF attachment
-      const formspreeEndpoint = contractData.options?.formspreeEndpoint
+      // Send email notification via Formspree (endpoint from env var, not URL)
+      const formspreeEndpoint = import.meta.env.VITE_FORMSPREE_ENDPOINT
       if (formspreeEndpoint) {
         const planNames = {
           'hosting-only': 'Hosting Only ($50/mo)',
