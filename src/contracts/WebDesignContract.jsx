@@ -3,74 +3,21 @@ import { useFormContext } from "../contexts/FormContext";
 import { generateDocument } from "../utils/documentGenerator";
 import { getTodayDate, formatDateToFields, getDateMonthsFromNow } from "../utils/dateUtils";
 import SignatureBlock from "../components/SignatureBlock";
+import {
+  ContractField,
+  ContractCheckboxList,
+  ContractSection
+} from "../components/ContractFields";
 
 const currentDate = formatDateToFields(getTodayDate());
 
-// Helper component: Shows editable input in admin view, static text in client view
-const ContractField = ({ value, onChange, placeholder, className, type = "text", isClientView }) => {
-  if (isClientView) {
-    // Client view: show static text with underline styling
-    return (
-      <span className="font-medium text-gray-900 border-b border-gray-400 px-1">
-        {value || placeholder || "___________"}
-      </span>
-    );
-  }
-  // Admin view: show editable input
-  return (
-    <input
-      type={type}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      className={className}
-    />
-  );
-};
-
-// Helper component: Shows checkboxes in admin view, checked items as bullet list in client view
-const ContractCheckboxList = ({ items, checkedArray, onToggle, isClientView }) => {
-  if (isClientView) {
-    // Client view: show only checked items as a bullet list
-    const checkedItems = items.filter((_, idx) => checkedArray?.[idx]);
-    if (checkedItems.length === 0) {
-      return <p className="ml-6 text-gray-500 italic">None selected</p>;
-    }
-    return (
-      <ul className="ml-6 mb-4 space-y-1">
-        {checkedItems.map((item, idx) => (
-          <li key={idx} className="flex items-start gap-2">
-            <span className="text-green-600 mt-0.5">✓</span>
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-    );
-  }
-  // Admin view: show checkboxes
-  return (
-    <div className="flex flex-col ml-6 mb-4">
-      {items.map((item, index) => (
-        <label key={index} className="contract-checkbox-label">
-          <input
-            type="checkbox"
-            checked={checkedArray?.[index] || false}
-            onChange={() => onToggle(index)}
-            className="contract-checkbox"
-          />
-          <span>{item}</span>
-        </label>
-      ))}
-    </div>
-  );
-};
-
-// Helper component: Shows textarea in admin view, static paragraph in client view
+// Helper component: Shows textarea in admin view, static paragraph in client view (hides if empty in client view)
 const ContractTextarea = ({ value, onChange, placeholder, className, isClientView }) => {
   if (isClientView) {
+    if (!value) return null;
     return (
       <p className="contract-p bg-gray-50 p-3 rounded border border-gray-200">
-        {value || <span className="text-gray-400 italic">{placeholder}</span>}
+        {value}
       </p>
     );
   }
@@ -361,6 +308,7 @@ const WebDesignDocument = () => {
           placeholder="__"
           className="contract-input-short"
           isClientView={isClientView}
+          hideIfEmpty={false}
         />{" "}
         day of{" "}
         <ContractField
@@ -369,6 +317,7 @@ const WebDesignDocument = () => {
           placeholder="________"
           className="contract-input-medium"
           isClientView={isClientView}
+          hideIfEmpty={false}
         />
         ,{" "}
         <ContractField
@@ -377,6 +326,7 @@ const WebDesignDocument = () => {
           placeholder="____"
           className="contract-input w-[50px]"
           isClientView={isClientView}
+          hideIfEmpty={false}
         />{" "}
         {!isClientView && (
           <span className="text-[10pt] text-gray-600 ml-2">
@@ -405,6 +355,7 @@ const WebDesignDocument = () => {
           placeholder="Developer Business Name"
           className="contract-input-inline contract-input-long"
           isClientView={isClientView}
+          hideIfEmpty={false}
         />
         , a web development and marketing business with its principal place of
         business located at{" "}
@@ -414,6 +365,7 @@ const WebDesignDocument = () => {
           placeholder="City, State, USA"
           className="contract-input-inline contract-input-long"
           isClientView={isClientView}
+          hideIfEmpty={false}
         />{" "}
         (hereinafter referred to as the "Developer")
       </p>
@@ -427,6 +379,7 @@ const WebDesignDocument = () => {
           placeholder="Client Company Name"
           className="contract-input-inline contract-input-long"
           isClientView={isClientView}
+          hideIfEmpty={false}
         />
         , an individual or business entity with its principal address at{" "}
         <ContractField
@@ -435,6 +388,7 @@ const WebDesignDocument = () => {
           placeholder="Client Address"
           className="contract-input-inline contract-input-long"
           isClientView={isClientView}
+          hideIfEmpty={false}
         />
         , E-mail:{" "}
         <ContractField
@@ -444,6 +398,7 @@ const WebDesignDocument = () => {
           placeholder="client@example.com"
           className="contract-input-inline w-[200px]"
           isClientView={isClientView}
+          hideIfEmpty={false}
         />
         , Phone Number:{" "}
         <ContractField
@@ -453,6 +408,7 @@ const WebDesignDocument = () => {
           placeholder="(555) 123-4567"
           className="contract-input-inline w-[140px]"
           isClientView={isClientView}
+          hideIfEmpty={false}
         />{" "}
         (hereinafter referred to as the "Client")
       </p>

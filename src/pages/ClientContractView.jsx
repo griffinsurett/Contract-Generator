@@ -87,17 +87,32 @@ const ClientContractView = () => {
         if (decoded.options?.workflowData?.typedName) {
           setTypedName(decoded.options.workflowData.typedName)
         }
+
+        // Determine tier selection - check various sources, default to priority if none set
+        let tierToSet = null
         // If tier was pre-selected from workflow
         if (decoded.options?.workflowData?.selectedTier) {
-          setSelectedTier(decoded.options.workflowData.selectedTier)
+          tierToSet = decoded.options.workflowData.selectedTier
         }
         // If admin pre-selected a hosting tier for web-design contract
-        if (decoded.formData?.selectedHostingTier) {
-          setSelectedTier(decoded.formData.selectedHostingTier)
+        else if (decoded.formData?.selectedHostingTier) {
+          tierToSet = decoded.formData.selectedHostingTier
         }
         // If admin pre-selected a tier for hosting contract
-        if (decoded.formData?.selectedTier) {
-          setSelectedTier(decoded.formData.selectedTier)
+        else if (decoded.formData?.selectedTier) {
+          tierToSet = decoded.formData.selectedTier
+        }
+        // Default to priority plan for better UX (recommended plan pre-selected)
+        else {
+          const contractId = decoded.isWorkflow ? decoded.workflow?.[0] : decoded.contractId
+          // Only default for contracts that show tier selection (hosting or web-design)
+          if (contractId === 'hosting' || contractId === 'web-design') {
+            tierToSet = 'hosting-priority'
+          }
+        }
+
+        if (tierToSet) {
+          setSelectedTier(tierToSet)
         }
 
         // Clear localStorage only when starting fresh (first contract with no existing workflow data)

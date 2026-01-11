@@ -3,6 +3,13 @@ import { useFormContext } from "../contexts/FormContext";
 import { generateDocument } from "../utils/documentGenerator";
 import { getTodayDate, formatDateToFields } from "../utils/dateUtils";
 import SignatureBlock from "../components/SignatureBlock";
+import {
+  ContractField,
+  ContractRadioGroup,
+  ContractCheckbox,
+  ContractCheckboxList,
+  AdminOnly
+} from "../components/ContractFields";
 const currentDate = formatDateToFields(getTodayDate());
 
 const HostingSidebarForm = ({ page = 'provider' }) => {
@@ -147,66 +154,72 @@ const HostingDocument = () => {
       <p className="contract-p">
         This {includesMaintenance ? "Website Hosting and Maintenance Agreement" : "Website Hosting Agreement"} (the "Agreement") is
         entered into as of this{" "}
-        <input
-          type="text"
+        <ContractField
           value={formData.day}
           onChange={(e) => updateField("day", e.target.value)}
+          placeholder="Day"
           className="contract-input-short"
+          isClientView={isClientView}
+          hideIfEmpty={false}
         />{" "}
         day of{" "}
-        <input
-          type="text"
+        <ContractField
           value={formData.month}
           onChange={(e) => updateField("month", e.target.value)}
+          placeholder="Month"
           className="contract-input-medium"
+          isClientView={isClientView}
+          hideIfEmpty={false}
         />
         ,{" "}
-        <input
-          type="text"
+        <ContractField
           value={formData.year}
           onChange={(e) => updateField("year", e.target.value)}
+          placeholder="Year"
           className="contract-input w-[50px]"
+          isClientView={isClientView}
+          hideIfEmpty={false}
         />{" "}
-        <span className="text-[10pt] text-gray-600 ml-2">
-          (or select:
-          <input
-            type="date"
-            defaultValue={getTodayDate()}
-            onChange={(e) => {
-              const dateFields = formatDateToFields(e.target.value);
-              updateField("day", dateFields.day);
-              updateField("month", dateFields.month);
-              updateField("year", dateFields.year);
-            }}
-            className="contract-date-picker"
-          />
-          )
-        </span>
+        {!isClientView && (
+          <span className="text-[10pt] text-gray-600 ml-2">
+            (or select:
+            <input
+              type="date"
+              defaultValue={getTodayDate()}
+              onChange={(e) => {
+                const dateFields = formatDateToFields(e.target.value);
+                updateField("day", dateFields.day);
+                updateField("month", dateFields.month);
+                updateField("year", dateFields.year);
+              }}
+              className="contract-date-picker"
+            />
+            )
+          </span>
+        )}
         <br />
         (the "Effective Date") by and between:
       </p>
 
       <p className="contract-p">
-        <input
-          type="text"
+        <ContractField
           value={formData.serviceProviderCompany}
-          onChange={(e) =>
-            updateField("serviceProviderCompany", e.target.value)
-          }
+          onChange={(e) => updateField("serviceProviderCompany", e.target.value)}
           placeholder="Service Provider Company Name"
           className="contract-input-inline contract-input-long"
+          isClientView={isClientView}
+          hideIfEmpty={false}
         />
         , a service provider that facilitates and manages website hosting and
         maintenance through third-party hosting platforms on behalf of its
         clients, with its principal place of business located at{" "}
-        <input
-          type="text"
+        <ContractField
           value={formData.serviceProviderLocation}
-          onChange={(e) =>
-            updateField("serviceProviderLocation", e.target.value)
-          }
+          onChange={(e) => updateField("serviceProviderLocation", e.target.value)}
           placeholder="Service Provider Location"
           className="contract-input contract-input-long text-left"
+          isClientView={isClientView}
+          hideIfEmpty={false}
         />{" "}
         (hereinafter referred to as the "Service Provider")
       </p>
@@ -214,44 +227,49 @@ const HostingDocument = () => {
       <p className="contract-p-center">-And-</p>
 
       <p className="contract-p">
-        <input
-          type="text"
+        <ContractField
           value={formData.clientFirstName}
           onChange={(e) => updateField("clientFirstName", e.target.value)}
           placeholder="Client First Name"
           className="contract-input-inline w-[150px]"
+          isClientView={isClientView}
+          hideIfEmpty={false}
         />{" "}
         of{" "}
-        <input
-          type="text"
+        <ContractField
           value={formData.clientCompanyName}
           onChange={(e) => updateField("clientCompanyName", e.target.value)}
           placeholder="Client Company Name"
           className="contract-input-inline w-[250px]"
+          isClientView={isClientView}
+          hideIfEmpty={false}
         />
         , an individual or business entity with its principal address at{" "}
-        <input
-          type="text"
+        <ContractField
           value={formData.clientAddress}
           onChange={(e) => updateField("clientAddress", e.target.value)}
           placeholder="Client Address"
           className="contract-input-inline contract-input-long"
+          isClientView={isClientView}
+          hideIfEmpty={false}
         />
         , E-mail:{" "}
-        <input
-          type="email"
+        <ContractField
           value={formData.clientEmail}
           onChange={(e) => updateField("clientEmail", e.target.value)}
           placeholder="client@example.com"
           className="contract-input-inline w-[200px]"
+          isClientView={isClientView}
+          hideIfEmpty={false}
         />
         , Phone Number:{" "}
-        <input
-          type="tel"
+        <ContractField
           value={formData.clientPhone}
           onChange={(e) => updateField("clientPhone", e.target.value)}
           placeholder="(555) 123-4567"
           className="contract-input-inline w-[150px]"
+          isClientView={isClientView}
+          hideIfEmpty={false}
         />{" "}
         (hereinafter referred to as the "Client")
       </p>
@@ -1008,38 +1026,49 @@ const HostingDocument = () => {
           based on the selected configuration and service level.
         </p>
 
-        <div className="flex flex-col ml-6 mb-4">
-          <label className="contract-checkbox-label">
-            <input
-              type="radio"
-              checked={formData.websiteType === "static"}
-              onChange={() => updateField("websiteType", "static")}
-              className="contract-checkbox"
-            />
-            <span>Static Website (default)</span>
-          </label>
-          <label className="contract-checkbox-label">
-            <input
-              type="radio"
-              checked={formData.websiteType === "dynamic"}
-              onChange={() => updateField("websiteType", "dynamic")}
-              className="contract-checkbox"
-            />
-            <span>Static Website with Minor Dynamic Features</span>
-          </label>
-          {formData.websiteType === "dynamic" && (
-            <div className="ml-7 mt-2">
-              <span>(specify): </span>
+        {isClientView ? (
+          <p className="contract-p ml-6">
+            <span className="font-medium">
+              {formData.websiteType === "static" && "Static Website"}
+              {formData.websiteType === "dynamic" && (
+                <>Static Website with Minor Dynamic Features{formData.dynamicFeatures && ` (${formData.dynamicFeatures})`}</>
+              )}
+            </span>
+          </p>
+        ) : (
+          <div className="flex flex-col ml-6 mb-4">
+            <label className="contract-checkbox-label">
               <input
-                type="text"
-                value={formData.dynamicFeatures}
-                onChange={(e) => updateField("dynamicFeatures", e.target.value)}
-                placeholder="e.g., contact form, basic animations"
-                className="contract-input contract-input-long text-left"
+                type="radio"
+                checked={formData.websiteType === "static"}
+                onChange={() => updateField("websiteType", "static")}
+                className="contract-checkbox"
               />
-            </div>
-          )}
-        </div>
+              <span>Static Website (default)</span>
+            </label>
+            <label className="contract-checkbox-label">
+              <input
+                type="radio"
+                checked={formData.websiteType === "dynamic"}
+                onChange={() => updateField("websiteType", "dynamic")}
+                className="contract-checkbox"
+              />
+              <span>Static Website with Minor Dynamic Features</span>
+            </label>
+            {formData.websiteType === "dynamic" && (
+              <div className="ml-7 mt-2">
+                <span>(specify): </span>
+                <input
+                  type="text"
+                  value={formData.dynamicFeatures}
+                  onChange={(e) => updateField("dynamicFeatures", e.target.value)}
+                  placeholder="e.g., contact form, basic animations"
+                  className="contract-input contract-input-long text-left"
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         <p className="contract-p">
           Hosting will be managed by the Service Provider using a selected
@@ -1056,51 +1085,37 @@ const HostingDocument = () => {
               The following maintenance services are included:
             </p>
 
-            <div className="flex flex-col ml-6 mb-4">
-              {[
+            <ContractCheckboxList
+              items={[
                 "Periodic testing of website uptime and form functionality",
                 "Minor updates to existing content areas (e.g., text, images, video replacements)",
                 "Addition of SEO tracking tags or metadata",
                 "Domain and SSL monitoring (if applicable)",
                 "Troubleshooting broken links or display issues",
                 "Monthly software/package updates applicable to the static site stack",
-              ].map((service, index) => (
-                <label key={index} className="contract-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={formData.maintenanceServices?.[index] || false}
-                    onChange={() => toggleMaintenanceService(index)}
-                    className="contract-checkbox"
-                  />
-                  <span>{service}</span>
-                </label>
-              ))}
-            </div>
+              ]}
+              checkedArray={formData.maintenanceServices}
+              onToggle={toggleMaintenanceService}
+              isClientView={isClientView}
+            />
 
             <h3 className="contract-h3">Content Updates</h3>
             <p className="contract-p">
               Permitted updates under this Agreement include only the following:
             </p>
 
-            <div className="flex flex-col ml-6 mb-4">
-              {[
+            <ContractCheckboxList
+              items={[
                 "Swapping or editing existing images and video",
                 "Editing or replacing existing text",
                 "Adding new content of the same type or layout (e.g., new city in a list of cities served)",
                 "Replacing contact information or business details",
                 "Adding embedded links or external resources",
-              ].map((update, index) => (
-                <label key={index} className="contract-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={formData.contentUpdates?.[index] || false}
-                    onChange={() => toggleContentUpdate(index)}
-                    className="contract-checkbox"
-                  />
-                  <span>{update}</span>
-                </label>
-              ))}
-            </div>
+              ]}
+              checkedArray={formData.contentUpdates}
+              onToggle={toggleContentUpdate}
+              isClientView={isClientView}
+            />
           </>
         )}
 
@@ -1127,97 +1142,149 @@ const HostingDocument = () => {
 
         <h3 className="contract-h3">Form Management</h3>
 
-        <div className="flex flex-col ml-6 mb-4">
-          <label className="contract-checkbox-label">
-            <input
-              type="checkbox"
-              checked={formData.formMonitoring || false}
-              onChange={(e) => updateField("formMonitoring", e.target.checked)}
-              className="contract-checkbox"
-            />
-            <span>
-              Form monitoring and delivery testing (using Formspree or
-              equivalent)
-            </span>
-          </label>
-
-          <p className="mt-3 mb-2">Formspree account managed by:</p>
-          <div className="flex flex-col ml-6">
-            <label className="contract-checkbox-label">
-              <input
-                type="radio"
-                checked={formData.formspreeManagement === "service-provider"}
-                onChange={() =>
-                  updateField("formspreeManagement", "service-provider")
-                }
-                className="contract-checkbox"
-              />
-              <span>Service Provider</span>
-            </label>
-            <label className="contract-checkbox-label">
-              <input
-                type="radio"
-                checked={formData.formspreeManagement === "client"}
-                onChange={() => updateField("formspreeManagement", "client")}
-                className="contract-checkbox"
-              />
-              <span>Client</span>
-            </label>
-            <label className="contract-checkbox-label">
-              <input
-                type="radio"
-                checked={formData.formspreeManagement === "joint"}
-                onChange={() => updateField("formspreeManagement", "joint")}
-                className="contract-checkbox"
-              />
-              <span>Joint access</span>
-            </label>
+        {isClientView ? (
+          // Client view: show as static list items
+          <div className="ml-6 mb-4">
+            {formData.formMonitoring && (
+              <p className="flex items-start gap-2">
+                <span className="text-green-600">✓</span>
+                <span>Form monitoring and delivery testing (using Formspree or equivalent)</span>
+              </p>
+            )}
+            {formData.formMonitoring && (
+              <p className="mt-2">
+                <strong>Formspree account managed by:</strong>{" "}
+                <span className="font-medium">
+                  {formData.formspreeManagement === "service-provider" && "Service Provider"}
+                  {formData.formspreeManagement === "client" && "Client"}
+                  {formData.formspreeManagement === "joint" && "Joint access"}
+                </span>
+              </p>
+            )}
           </div>
-        </div>
+        ) : (
+          // Admin view: show editable checkboxes/radios
+          <div className="flex flex-col ml-6 mb-4">
+            <label className="contract-checkbox-label">
+              <input
+                type="checkbox"
+                checked={formData.formMonitoring || false}
+                onChange={(e) => updateField("formMonitoring", e.target.checked)}
+                className="contract-checkbox"
+              />
+              <span>
+                Form monitoring and delivery testing (using Formspree or
+                equivalent)
+              </span>
+            </label>
+
+            <p className="mt-3 mb-2">Formspree account managed by:</p>
+            <div className="flex flex-col ml-6">
+              <label className="contract-checkbox-label">
+                <input
+                  type="radio"
+                  checked={formData.formspreeManagement === "service-provider"}
+                  onChange={() =>
+                    updateField("formspreeManagement", "service-provider")
+                  }
+                  className="contract-checkbox"
+                />
+                <span>Service Provider</span>
+              </label>
+              <label className="contract-checkbox-label">
+                <input
+                  type="radio"
+                  checked={formData.formspreeManagement === "client"}
+                  onChange={() => updateField("formspreeManagement", "client")}
+                  className="contract-checkbox"
+                />
+                <span>Client</span>
+              </label>
+              <label className="contract-checkbox-label">
+                <input
+                  type="radio"
+                  checked={formData.formspreeManagement === "joint"}
+                  onChange={() => updateField("formspreeManagement", "joint")}
+                  className="contract-checkbox"
+                />
+                <span>Joint access</span>
+              </label>
+            </div>
+          </div>
+        )}
 
         <p className="contract-p">
           <strong>Service Start Date:</strong>{" "}
-          <input
-            type="date"
-            value={formData.serviceStartDate}
-            onChange={(e) => updateField("serviceStartDate", e.target.value)}
-            className="contract-input w-[140px]"
-          />
+          {isClientView ? (
+            <span className="font-medium">
+              {formData.serviceStartDate || "___________"}
+            </span>
+          ) : (
+            <input
+              type="date"
+              value={formData.serviceStartDate}
+              onChange={(e) => updateField("serviceStartDate", e.target.value)}
+              className="contract-input w-[140px]"
+            />
+          )}
         </p>
 
-        <p className="contract-p">
-          <strong>Billing Period:</strong>
-        </p>
-        <div className="flex flex-col ml-6 mb-4">
-          <label className="contract-checkbox-label">
-            <input
-              type="radio"
-              checked={formData.billingPeriod === "monthly"}
-              onChange={() => updateField("billingPeriod", "monthly")}
-              className="contract-checkbox"
-            />
-            <span>Monthly</span>
-          </label>
-          <label className="contract-checkbox-label">
-            <input
-              type="radio"
-              checked={formData.billingPeriod === "annually"}
-              onChange={() => updateField("billingPeriod", "annually")}
-              className="contract-checkbox"
-            />
-            <span>Annually</span>
-          </label>
-        </div>
+        {isClientView ? (
+          <p className="contract-p">
+            <strong>Billing Period:</strong>{" "}
+            <span className="font-medium">
+              {formData.billingPeriod === "monthly" ? "Monthly" : "Annually"}
+            </span>
+          </p>
+        ) : (
+          <>
+            <p className="contract-p">
+              <strong>Billing Period:</strong>
+            </p>
+            <div className="flex flex-col ml-6 mb-4">
+              <label className="contract-checkbox-label">
+                <input
+                  type="radio"
+                  checked={formData.billingPeriod === "monthly"}
+                  onChange={() => updateField("billingPeriod", "monthly")}
+                  className="contract-checkbox"
+                />
+                <span>Monthly</span>
+              </label>
+              <label className="contract-checkbox-label">
+                <input
+                  type="radio"
+                  checked={formData.billingPeriod === "annually"}
+                  onChange={() => updateField("billingPeriod", "annually")}
+                  className="contract-checkbox"
+                />
+                <span>Annually</span>
+              </label>
+            </div>
+          </>
+        )}
 
-        <p className="contract-p">
-          <strong>Additional Notes or Customizations:</strong>
-        </p>
-        <textarea
-          value={formData.additionalNotes}
-          onChange={(e) => updateField("additionalNotes", e.target.value)}
-          placeholder="Enter any additional notes..."
-          className="contract-textarea ml-6 mb-4"
-        />
+        {!isClientView && (
+          <>
+            <p className="contract-p">
+              <strong>Additional Notes or Customizations:</strong>
+            </p>
+            <textarea
+              value={formData.additionalNotes}
+              onChange={(e) => updateField("additionalNotes", e.target.value)}
+              placeholder="Enter any additional notes..."
+              className="contract-textarea ml-6 mb-4"
+            />
+          </>
+        )}
+        {isClientView && formData.additionalNotes && (
+          <>
+            <p className="contract-p">
+              <strong>Additional Notes or Customizations:</strong>
+            </p>
+            <p className="contract-p ml-6">{formData.additionalNotes}</p>
+          </>
+        )}
 
         <h3 className="contract-h3">Fees and Payment Terms</h3>
 
@@ -1228,6 +1295,7 @@ const HostingDocument = () => {
 
         {/* Show tier-based pricing when tier is selected (client view) */}
         {formData.selectedTier ? (
+          // Show selected tier for both admin and client
           <div className="ml-6 mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <p className="contract-p mb-2">
               <strong>Selected Plan:</strong>{" "}
@@ -1242,8 +1310,16 @@ const HostingDocument = () => {
               {formData.selectedTier === 'hosting-priority' && '$100.00/month'}
             </p>
           </div>
-        ) : (
-          /* Admin view - allow manual fee entry or show tier options */
+        ) : formData.totalFee ? (
+          // Show custom fee if set
+          <p className="contract-p ml-6">
+            <strong>Fee:</strong>{" "}
+            <span className="font-medium">
+              ${formData.totalFee} per {formData.feeFrequency || "month"}
+            </span>
+          </p>
+        ) : !isClientView ? (
+          // Admin view only - allow manual fee entry or show tier options
           <>
             <div className="ml-6 mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <p className="text-sm text-gray-600 mb-3">
@@ -1293,80 +1369,105 @@ const HostingDocument = () => {
               </label>
             </div>
           </>
+        ) : null}
+
+        {isClientView ? (
+          <p className="contract-p">
+            <strong>Invoicing Method:</strong>{" "}
+            <span className="font-medium">
+              {formData.invoicingMethod === "upfront" && "Paid upfront on or before the service start date"}
+              {formData.invoicingMethod === "recurring" && "Recurring automatic payments"}
+              {formData.invoicingMethod === "other" && `Other: ${formData.invoicingOther || ""}`}
+            </span>
+          </p>
+        ) : (
+          <>
+            <p className="contract-p">
+              <strong>Invoicing Method:</strong>
+            </p>
+            <div className="flex flex-col ml-6 mb-4">
+              <label className="contract-checkbox-label">
+                <input
+                  type="radio"
+                  checked={formData.invoicingMethod === "upfront"}
+                  onChange={() => updateField("invoicingMethod", "upfront")}
+                  className="contract-checkbox"
+                />
+                <span>Paid upfront on or before the service start date</span>
+              </label>
+              <label className="contract-checkbox-label">
+                <input
+                  type="radio"
+                  checked={formData.invoicingMethod === "recurring"}
+                  onChange={() => updateField("invoicingMethod", "recurring")}
+                  className="contract-checkbox"
+                />
+                <span>Recurring automatic payments</span>
+              </label>
+              <label className="contract-checkbox-label">
+                <input
+                  type="radio"
+                  checked={formData.invoicingMethod === "other"}
+                  onChange={() => updateField("invoicingMethod", "other")}
+                  className="contract-checkbox"
+                />
+                <span>Other: </span>
+                {formData.invoicingMethod === "other" && (
+                  <input
+                    type="text"
+                    value={formData.invoicingOther}
+                    onChange={(e) => updateField("invoicingOther", e.target.value)}
+                    placeholder="Specify method"
+                    className="contract-input w-[200px] ml-2 text-left"
+                  />
+                )}
+              </label>
+            </div>
+          </>
         )}
 
-        <p className="contract-p">
-          <strong>Invoicing Method:</strong>
-        </p>
-        <div className="flex flex-col ml-6 mb-4">
-          <label className="contract-checkbox-label">
+        {isClientView ? (
+          <p className="contract-p">
+            <strong>Late Payment Terms:</strong> A late fee of $
+            <span className="font-medium">{formData.lateFeeAmount || "0.00"}</span>
+            {" "}or{" "}
+            <span className="font-medium">{formData.lateFeePercentage || "0"}</span>
+            % of the outstanding balance may be applied for payments not received within{" "}
+            <span className="font-medium">{formData.lateFeeDays || "0"}</span>
+            {" "}days of the due date.
+          </p>
+        ) : (
+          <p className="contract-p">
+            <strong>Late Payment Terms:</strong> A late fee of $
             <input
-              type="radio"
-              checked={formData.invoicingMethod === "upfront"}
-              onChange={() => updateField("invoicingMethod", "upfront")}
-              className="contract-checkbox"
-            />
-            <span>Paid upfront on or before the service start date</span>
-          </label>
-          <label className="contract-checkbox-label">
+              type="number"
+              step="0.01"
+              value={formData.lateFeeAmount}
+              onChange={(e) => updateField("lateFeeAmount", e.target.value)}
+              placeholder="0.00"
+              className="contract-input w-[60px]"
+            />{" "}
+            or{" "}
             <input
-              type="radio"
-              checked={formData.invoicingMethod === "recurring"}
-              onChange={() => updateField("invoicingMethod", "recurring")}
-              className="contract-checkbox"
+              type="number"
+              step="0.1"
+              value={formData.lateFeePercentage}
+              onChange={(e) => updateField("lateFeePercentage", e.target.value)}
+              placeholder="0"
+              className="contract-input w-[50px]"
             />
-            <span>Recurring automatic payments</span>
-          </label>
-          <label className="contract-checkbox-label">
+            % of the outstanding balance may be applied for payments not received
+            within{" "}
             <input
-              type="radio"
-              checked={formData.invoicingMethod === "other"}
-              onChange={() => updateField("invoicingMethod", "other")}
-              className="contract-checkbox"
-            />
-            <span>Other: </span>
-            {formData.invoicingMethod === "other" && (
-              <input
-                type="text"
-                value={formData.invoicingOther}
-                onChange={(e) => updateField("invoicingOther", e.target.value)}
-                placeholder="Specify method"
-                className="contract-input w-[200px] ml-2 text-left"
-              />
-            )}
-          </label>
-        </div>
-
-        <p className="contract-p">
-          <strong>Late Payment Terms:</strong> A late fee of $
-          <input
-            type="number"
-            step="0.01"
-            value={formData.lateFeeAmount}
-            onChange={(e) => updateField("lateFeeAmount", e.target.value)}
-            placeholder="0.00"
-            className="contract-input w-[60px]"
-          />{" "}
-          or{" "}
-          <input
-            type="number"
-            step="0.1"
-            value={formData.lateFeePercentage}
-            onChange={(e) => updateField("lateFeePercentage", e.target.value)}
-            placeholder="0"
-            className="contract-input w-[50px]"
-          />
-          % of the outstanding balance may be applied for payments not received
-          within{" "}
-          <input
-            type="number"
-            value={formData.lateFeeDays}
-            onChange={(e) => updateField("lateFeeDays", e.target.value)}
-            placeholder="0"
-            className="contract-input w-[50px]"
-          />{" "}
-          days of the due date.
-        </p>
+              type="number"
+              value={formData.lateFeeDays}
+              onChange={(e) => updateField("lateFeeDays", e.target.value)}
+              placeholder="0"
+              className="contract-input w-[50px]"
+            />{" "}
+            days of the due date.
+          </p>
+        )}
 
         {/* SIGNATURES SECTION */}
         <div className="contract-signature-section">
