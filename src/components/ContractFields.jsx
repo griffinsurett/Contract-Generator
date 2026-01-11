@@ -150,7 +150,13 @@ export const ContractCheckboxList = ({
 }) => {
   if (isClientView) {
     const checkedItems = items.filter((_, idx) => checkedArray?.[idx]);
-    if (hideIfEmpty && checkedItems.length === 0) return null;
+    if (checkedItems.length === 0) {
+      if (hideIfEmpty) return null;
+      // Show "None selected" message if hideIfEmpty is false
+      return (
+        <p className="ml-6 mb-4 text-gray-500 italic">None selected</p>
+      );
+    }
     return (
       <ul className="ml-6 mb-4 space-y-1">
         {checkedItems.map((item, idx) => (

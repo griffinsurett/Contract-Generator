@@ -1,3 +1,179 @@
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
+
+/**
+ * Generates a PDF blob from HTML content using html2canvas + jsPDF
+ * This gives us an actual PDF file that can be uploaded/attached
+ * @param {HTMLElement|Object} element - The contract document element or object with innerHTML
+ * @param {Object} options - Configuration options
+ * @returns {Promise<{blob: Blob, filename: string}>} - PDF as Blob
+ */
+export const generatePDFBlob = async (element, options = {}) => {
+  const { filename = 'contract.pdf' } = options
+
+  // Create a temporary container for rendering - must be visible for html2canvas
+  const container = document.createElement('div')
+  container.id = 'pdf-render-container'
+
+  // Add a style tag to override oklch colors (not supported by html2canvas)
+  // This converts Tailwind v4's oklch colors to standard hex/rgb
+  const styleOverride = document.createElement('style')
+  styleOverride.textContent = `
+    #pdf-render-container, #pdf-render-container * {
+      /* Override any oklch colors with fallback values */
+      --tw-text-opacity: 1 !important;
+      --tw-bg-opacity: 1 !important;
+      --tw-border-opacity: 1 !important;
+    }
+    #pdf-render-container {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 794px;
+      padding: 40px;
+      background: white !important;
+      background-color: #ffffff !important;
+      font-family: "Times New Roman", Times, serif;
+      font-size: 11pt;
+      line-height: 1.6;
+      color: #000000 !important;
+      z-index: -9999;
+      pointer-events: none;
+    }
+    #pdf-render-container h1, #pdf-render-container h2, #pdf-render-container h3 {
+      color: #000000 !important;
+    }
+    #pdf-render-container p, #pdf-render-container span, #pdf-render-container li {
+      color: #000000 !important;
+    }
+    #pdf-render-container .text-gray-900 { color: #111827 !important; }
+    #pdf-render-container .text-gray-800 { color: #1f2937 !important; }
+    #pdf-render-container .text-gray-700 { color: #374151 !important; }
+    #pdf-render-container .text-gray-600 { color: #4b5563 !important; }
+    #pdf-render-container .text-gray-500 { color: #6b7280 !important; }
+    #pdf-render-container .text-gray-400 { color: #9ca3af !important; }
+    #pdf-render-container .text-blue-700 { color: #1d4ed8 !important; }
+    #pdf-render-container .text-blue-600 { color: #2563eb !important; }
+    #pdf-render-container .text-green-600 { color: #16a34a !important; }
+    #pdf-render-container .bg-gray-50 { background-color: #f9fafb !important; }
+    #pdf-render-container .bg-gray-100 { background-color: #f3f4f6 !important; }
+    #pdf-render-container .bg-blue-100 { background-color: #dbeafe !important; }
+    #pdf-render-container .border-gray-200 { border-color: #e5e7eb !important; }
+    #pdf-render-container .border-gray-300 { border-color: #d1d5db !important; }
+    #pdf-render-container .border-gray-400 { border-color: #9ca3af !important; }
+  `
+  document.head.appendChild(styleOverride)
+
+  // Handle both DOM element and innerHTML object
+  let htmlContent
+  if (element.innerHTML && typeof element.innerHTML === 'string' && !element.cloneNode) {
+    htmlContent = element.innerHTML
+  } else {
+    const clone = element.cloneNode(true)
+
+    // Remove pointer-events-none class that might affect rendering
+    clone.classList.remove('pointer-events-none')
+    clone.style.pointerEvents = 'auto'
+
+    // Replace inputs with their current values as text
+    clone.querySelectorAll('input, select, textarea').forEach(input => {
+      const span = document.createElement('span')
+      // Get the actual value from the original element if possible
+      const originalInput = element.querySelector(`[name="${input.name}"]`) || input
+      span.textContent = originalInput.value || input.value || input.placeholder || '___________'
+      span.style.fontWeight = 'bold'
+      span.style.borderBottom = '1px solid #000'
+      span.style.padding = '0 4px'
+      if (input.parentNode) {
+        input.parentNode.replaceChild(span, input)
+      }
+    })
+
+    // Remove elements that shouldn't be in PDF
+    clone.querySelectorAll('[data-export-control="true"]').forEach(el => el.remove())
+    clone.querySelectorAll('input[type="date"]').forEach(el => el.remove())
+    clone.querySelectorAll('.contract-date-picker').forEach(el => el.remove())
+
+    // Remove any "(or select:" helper text
+    clone.querySelectorAll('span').forEach(span => {
+      if (span.textContent?.includes('(or select:')) {
+        span.remove()
+      }
+    })
+
+    // Strip oklch from inline styles
+    clone.querySelectorAll('*').forEach(el => {
+      if (el.style && el.style.cssText) {
+        el.style.cssText = el.style.cssText.replace(/oklch\([^)]+\)/g, '#000000')
+      }
+    })
+
+    htmlContent = clone.innerHTML
+  }
+
+  container.innerHTML = htmlContent
+  document.body.appendChild(container)
+
+  // Force layout calculation
+  container.offsetHeight
+
+  try {
+    console.log('html2canvas starting, container size:', container.offsetWidth, 'x', container.offsetHeight)
+
+    // Use html2canvas to capture the content
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      width: container.offsetWidth,
+      height: container.offsetHeight,
+      windowWidth: container.offsetWidth,
+      windowHeight: container.offsetHeight,
+      // Ignore elements with unsupported colors
+      ignoreElements: (el) => {
+        // Skip elements that might have problematic styles
+        return el.tagName === 'SCRIPT' || el.tagName === 'STYLE'
+      }
+    })
+
+    console.log('Canvas generated:', canvas.width, 'x', canvas.height)
+
+    // Calculate dimensions for PDF (A4 size)
+    const imgWidth = 210 // A4 width in mm
+    const pageHeight = 297 // A4 height in mm
+    const imgHeight = (canvas.height * imgWidth) / canvas.width
+    let heightLeft = imgHeight
+    let position = 0
+
+    // Create PDF
+    const pdf = new jsPDF('p', 'mm', 'a4')
+    const imgData = canvas.toDataURL('image/jpeg', 0.95)
+
+    // Add first page
+    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
+    heightLeft -= pageHeight
+
+    // Add additional pages if content is longer than one page
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight
+      pdf.addPage()
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+    }
+
+    // Get blob
+    const blob = pdf.output('blob')
+    console.log('PDF blob created, size:', blob.size)
+
+    return { blob, filename }
+  } finally {
+    // Clean up
+    document.body.removeChild(container)
+    document.head.removeChild(styleOverride)
+  }
+}
+
 /**
  * Generates a PDF from a contract element using the browser's print functionality
  * This approach uses CSS page-break rules which the browser respects

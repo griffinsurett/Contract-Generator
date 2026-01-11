@@ -4,7 +4,7 @@ import SignaturePad from 'signature_pad'
 import { decodeContractData } from '../utils/contractUrl'
 import { getContractConfig } from '../contracts'
 import { FormProvider } from '../contexts/FormContext'
-import { generateContractPDF } from '../utils/pdfGenerator.jsx'
+import { generateContractPDF, generatePDFBlob } from '../utils/pdfGenerator.jsx'
 
 const ClientContractView = () => {
   const { encodedData } = useParams()
@@ -340,36 +340,68 @@ const ClientContractView = () => {
         // Non-critical - continue without saving
       }
 
-      // Send email notification via Formspree (endpoint from env var, not URL)
+      // Send email notification via Formspree with PDF attachment
       const formspreeEndpoint = import.meta.env.VITE_FORMSPREE_ENDPOINT
-      if (formspreeEndpoint) {
+      if (formspreeEndpoint && contractDocRef.current) {
         const planNames = {
           'hosting-only': 'Hosting Only ($50/mo)',
           'hosting-basic': 'Hosting + Maintenance Basic ($80/mo) - 3 updates/week',
           'hosting-priority': 'Hosting + Maintenance Priority ($100/mo) - 15 updates/week'
         }
 
-        // Build email body with contract summary
-        const emailBody = {
-          _subject: `Contract Signed: ${contractConfig?.name || currentContractId} - ${clientInfo.companyName || typedName}`,
-          _replyto: clientInfo.email, // So dev can reply directly to client
-          email: clientInfo.email, // Required for Formspree auto-response to work
-          clientName: typedName,
-          clientEmail: clientInfo.email,
-          clientPhone: clientInfo.phone || 'Not provided',
-          clientCompany: clientInfo.companyName || 'Not provided',
-          clientAddress: clientInfo.address || 'Not provided',
-          selectedPlan: planNames[selectedTier] || 'N/A',
-          acceptedAt: new Date().toLocaleString(),
-          contractType: contractConfig?.name || currentContractId,
-          workflowStep: isWorkflow() ? `${getCurrentWorkflowIndex() + 1} of ${getWorkflowContracts().length}` : 'Single contract'
+        // Generate PDF blob from the contract document
+        const pdfFilename = `${(contractConfig?.name || currentContractId).replace(/\s+/g, '_')}_${typedName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+
+        let pdfBlob = null
+        try {
+          console.log('Generating PDF for email attachment...')
+          const pdfResult = await generatePDFBlob(contractDocRef.current, { filename: pdfFilename })
+          pdfBlob = pdfResult.blob
+          console.log('PDF generated successfully:', pdfFilename, 'Size:', pdfBlob?.size, 'bytes')
+        } catch (pdfErr) {
+          console.warn('Could not generate PDF for email attachment:', pdfErr)
         }
 
-        await fetch(formspreeEndpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(emailBody)
-        })
+        // Use FormData for multipart/form-data submission (required for file uploads)
+        const formData = new FormData()
+        formData.append('_subject', `Contract Signed: ${contractConfig?.name || currentContractId} - ${clientInfo.companyName || typedName}`)
+        formData.append('_replyto', clientInfo.email)
+        formData.append('email', clientInfo.email)
+        formData.append('clientName', typedName)
+        formData.append('clientEmail', clientInfo.email)
+        formData.append('clientPhone', clientInfo.phone || 'Not provided')
+        formData.append('clientCompany', clientInfo.companyName || 'Not provided')
+        formData.append('clientAddress', clientInfo.address || 'Not provided')
+        formData.append('selectedPlan', planNames[selectedTier] || 'N/A')
+        formData.append('acceptedAt', new Date().toLocaleString())
+        formData.append('contractType', contractConfig?.name || currentContractId)
+        formData.append('workflowStep', isWorkflow() ? `${getCurrentWorkflowIndex() + 1} of ${getWorkflowContracts().length}` : 'Single contract')
+
+        // Attach PDF if generated successfully
+        if (pdfBlob) {
+          // Convert blob to File object for proper Formspree handling
+          const pdfFile = new File([pdfBlob], pdfFilename, { type: 'application/pdf' })
+          formData.append('attachment', pdfFile)
+        }
+
+        try {
+          console.log('Sending to Formspree with attachment:', pdfBlob ? 'Yes' : 'No')
+          const response = await fetch(formspreeEndpoint, {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'Accept': 'application/json' // Tell Formspree to return JSON instead of redirecting
+            }
+          })
+          const responseData = await response.json().catch(() => ({}))
+          console.log('Formspree response:', response.status, responseData)
+          if (!response.ok) {
+            console.warn('Formspree submission returned non-OK status:', response.status, responseData)
+          }
+        } catch (emailErr) {
+          // Non-critical - contract signing still succeeds even if email fails
+          console.warn('Could not send email notification:', emailErr)
+        }
       }
 
       // Check if there's a next contract in the workflow

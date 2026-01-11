@@ -1182,6 +1182,7 @@ const WebDesignDocument = () => {
             placeholder="Client Contact Name"
             className="contract-input-inline contract-input-long"
             isClientView={isClientView}
+            hideIfEmpty={false}
           />
         </p>
 
@@ -1193,6 +1194,7 @@ const WebDesignDocument = () => {
             placeholder="Website Project Title"
             className="contract-input-inline contract-input-long"
             isClientView={isClientView}
+            hideIfEmpty={false}
           />
         </p>
 
@@ -1235,6 +1237,7 @@ const WebDesignDocument = () => {
           checkedArray={formData.designServices}
           onToggle={toggleDesignService}
           isClientView={isClientView}
+          hideIfEmpty={false}
         />
 
         <h3 className="contract-h3">Development Services {!isClientView && "(select all that apply)"}</h3>
@@ -1252,6 +1255,7 @@ const WebDesignDocument = () => {
           checkedArray={formData.devServices}
           onToggle={toggleDevService}
           isClientView={isClientView}
+          hideIfEmpty={false}
         />
 
         <h3 className="contract-h3">Functionality Requirements {!isClientView && "(check if included)"}</h3>
@@ -1266,6 +1270,7 @@ const WebDesignDocument = () => {
           checkedArray={formData.functionality}
           onToggle={toggleFunctionality}
           isClientView={isClientView}
+          hideIfEmpty={false}
         />
 
         {formData.functionality?.[2] && (
@@ -1303,6 +1308,7 @@ const WebDesignDocument = () => {
             placeholder="5"
             className="contract-input w-[60px]"
             isClientView={isClientView}
+            hideIfEmpty={false}
           />
         </p>
 
@@ -1322,6 +1328,7 @@ const WebDesignDocument = () => {
           checkedArray={formData.clientContent}
           onToggle={toggleClientContent}
           isClientView={isClientView}
+          hideIfEmpty={false}
         />
 
         <p className="contract-p">
@@ -1360,6 +1367,7 @@ const WebDesignDocument = () => {
           checkedArray={formData.deliverables}
           onToggle={toggleDeliverable}
           isClientView={isClientView}
+          hideIfEmpty={false}
         />
 
         <h3 className="contract-h3">Hosting & Maintenance Services</h3>
@@ -1618,22 +1626,21 @@ export const WebDesignContract = {
     confidentialityYears: "3",
     governingState: "New Jersey",
     courtCounty: "Monmouth County",
-    designServices: [
-      "Custom Homepage Design",
-      "Interior Page Templates",
-      "Mobile and Tablet Responsive Layouts",
-      "Custom Icons or Graphics",
-    ],
-    devServices: [
-      "Basic Search Engine Optimization Setup (Meta tags, structure)",
-    ],
-    functionality: [],
+    // Boolean arrays for checkbox lists - index matches items in ContractCheckboxList
+    // Design Services: [Homepage, Interior, Mobile, Logo, Icons, Accessibility, Review]
+    designServices: [true, true, true, false, true, false, false],
+    // Dev Services: [Static, CMS, E-commerce, Contact Form, Newsletter, Blog, SEO, Cookie]
+    devServices: [false, false, false, false, false, false, true, false],
+    // Functionality: [User Login, Booking, Payment, Third-Party, Multilingual]
+    functionality: [false, false, false, false, false],
     paymentGateway: "",
     thirdPartyTool: "",
-    totalPages: "",
-    clientContent: [],
+    totalPages: "5",
+    // Client Content: [Page Text, Images, Product Listings, Videos, Logo Files]
+    clientContent: [true, true, false, false, true],
     contentDeadline: "",
-    deliverables: [],
+    // Deliverables: [Functional site, Hosting, Credentials, Files, Onboarding]
+    deliverables: [true, true, true, true, false],
     // Hosting tier selection: 'hosting-only', 'hosting-basic', 'hosting-priority', 'none'
     selectedHostingTier: null,
     totalFee: "",
