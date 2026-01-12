@@ -4,7 +4,7 @@ import SignaturePad from 'signature_pad'
 import { decodeContractData } from '../utils/contractUrl'
 import { getContractConfig } from '../contracts'
 import { FormProvider } from '../contexts/FormContext'
-import { generateContractPDF, generatePDFBlob } from '../utils/pdfGenerator.jsx'
+import { generateContractPDF, generateContractPDFBlob } from '../utils/pdfGenerator.jsx'
 
 const ClientContractView = () => {
   const { encodedData } = useParams()
@@ -349,13 +349,11 @@ const ClientContractView = () => {
           'hosting-priority': 'Hosting + Maintenance Priority ($100/mo) - 15 updates/week'
         }
 
-        // Generate PDF blob from the contract document
         const pdfFilename = `${(contractConfig?.name || currentContractId).replace(/\s+/g, '_')}_${typedName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
-
         let pdfBlob = null
         try {
           console.log('Generating PDF for email attachment...')
-          const pdfResult = await generatePDFBlob(contractDocRef.current, { filename: pdfFilename })
+          const pdfResult = await generateContractPDFBlob(contractDocRef.current, { filename: pdfFilename })
           pdfBlob = pdfResult.blob
           console.log('PDF generated successfully:', pdfFilename, 'Size:', pdfBlob?.size, 'bytes')
         } catch (pdfErr) {
@@ -377,9 +375,7 @@ const ClientContractView = () => {
         formData.append('contractType', contractConfig?.name || currentContractId)
         formData.append('workflowStep', isWorkflow() ? `${getCurrentWorkflowIndex() + 1} of ${getWorkflowContracts().length}` : 'Single contract')
 
-        // Attach PDF if generated successfully
         if (pdfBlob) {
-          // Convert blob to File object for proper Formspree handling
           const pdfFile = new File([pdfBlob], pdfFilename, { type: 'application/pdf' })
           formData.append('attachment', pdfFile)
         }

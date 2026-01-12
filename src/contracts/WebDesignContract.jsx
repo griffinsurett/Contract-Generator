@@ -870,7 +870,52 @@ const WebDesignDocument = () => {
         this Agreement.
       </p>
 
-      <h2 className="contract-h2">10. WARRANTIES AND DISCLAIMERS</h2>
+      <h2 className="contract-h2">10. WEBSITE SECURITY</h2>
+
+      <p className="contract-p">
+        The Developer shall implement reasonable security practices during the
+        development and delivery of the website. These practices may include,
+        where applicable to the project scope: SSL/TLS encryption (HTTPS)
+        configuration; sanitization of form inputs to reduce risk of injection
+        or cross-site scripting (XSS) attacks; secure storage of credentials and
+        environment variables during development; and appropriate file
+        permissions on delivered files.
+      </p>
+
+      <p className="contract-p">
+        The Client acknowledges that no website or digital system can be
+        guaranteed to be completely secure. The internet is inherently exposed
+        to risks including cyberattacks, unauthorized access, data breaches,
+        malware, phishing, brute-force attacks, and exploitation of unknown
+        vulnerabilities. New security threats and attack methods emerge
+        continuously, and even well-protected websites may be targeted or
+        compromised. The Developer does not warrant that the website will be
+        immune from attack or free from all vulnerabilities.
+      </p>
+
+      <p className="contract-p">
+        The Developer's security obligations are limited to reasonable
+        precautions taken at the time of development and delivery. The Developer
+        shall not be liable for: security vulnerabilities discovered or
+        exploited after delivery; attacks or breaches resulting from hosting
+        provider failures, third-party software, plugins, or dependencies;
+        zero-day exploits or vulnerabilities unknown at the time of delivery;
+        social engineering, phishing, or attacks targeting the Client or its
+        users directly; weak, reused, or compromised passwords or credentials;
+        failure by the Client to apply updates, patches, or security fixes after
+        delivery; or any security incidents arising from changes made to the
+        website by the Client or third parties after delivery.
+      </p>
+
+      <p className="contract-p">
+        After delivery, the Client assumes full responsibility for the ongoing
+        security and maintenance of the website unless the Client has entered
+        into a separate maintenance agreement with the Developer. This includes
+        keeping software and plugins updated, monitoring for threats, maintaining
+        backups, and implementing additional security measures as appropriate.
+      </p>
+
+      <h2 className="contract-h2">11. WARRANTIES AND DISCLAIMERS</h2>
 
       <p className="contract-p">
         The Developer warrants that the Final Website, as delivered to the
@@ -918,7 +963,7 @@ const WebDesignDocument = () => {
         may be subject to additional charges and a new written arrangement.
       </p>
 
-      <h2 className="contract-h2">11. LIMITATION OF LIABILITY</h2>
+      <h2 className="contract-h2">12. LIMITATION OF LIABILITY</h2>
 
       <p className="contract-p">
         To the fullest extent permitted by applicable law, the total liability
@@ -943,7 +988,7 @@ const WebDesignDocument = () => {
         without this limitation in place.
       </p>
 
-      <h2 className="contract-h2">12. TERM AND TERMINATION</h2>
+      <h2 className="contract-h2">13. TERM AND TERMINATION</h2>
 
       <p className="contract-p">
         This Agreement shall commence on the Effective Date stated above and
@@ -997,7 +1042,7 @@ const WebDesignDocument = () => {
         other legal or equitable remedies available to the Developer.
       </p>
 
-      <h2 className="contract-h2">13. CONFIDENTIALITY</h2>
+      <h2 className="contract-h2">14. CONFIDENTIALITY</h2>
 
       <p className="contract-p">
         Each party agrees to maintain in strict confidence all confidential,
@@ -1037,7 +1082,7 @@ const WebDesignDocument = () => {
         with ongoing sensitivity.
       </p>
 
-      <h2 className="contract-h2">14. FORCE MAJEURE</h2>
+      <h2 className="contract-h2">15. FORCE MAJEURE</h2>
 
       <p className="contract-p">
         The Developer shall not be held liable for any delay or failure in the
@@ -1059,7 +1104,7 @@ const WebDesignDocument = () => {
         up to the date of termination.
       </p>
 
-      <h2 className="contract-h2">15. NOTICES</h2>
+      <h2 className="contract-h2">16. NOTICES</h2>
 
       <p className="contract-p">
         All notices, requests, demands, or other communications required or
@@ -1074,7 +1119,7 @@ const WebDesignDocument = () => {
         recognized courier service, or emailed with confirmation of receipt.
       </p>
 
-      <h2 className="contract-h2">16. GOVERNING LAW AND JURISDICTION</h2>
+      <h2 className="contract-h2">17. GOVERNING LAW AND JURISDICTION</h2>
 
       <p className="contract-p">
         This Agreement shall be governed by and construed in accordance with the
@@ -1123,7 +1168,7 @@ const WebDesignDocument = () => {
         protect its intellectual property rights or confidential information.
       </p>
 
-      <h2 className="contract-h2">17. MISCELLANEOUS PROVISIONS</h2>
+      <h2 className="contract-h2">18. MISCELLANEOUS PROVISIONS</h2>
 
       <p className="contract-p">
         No modification, amendment, or waiver of any provision of this Agreement
